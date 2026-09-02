@@ -2,98 +2,108 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#111214" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#111315" />
   <meta name="color-scheme" content="dark light" />
   <title>Work Storage</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
-
-  <div id="loginView" class="login-view hidden">
-    <div class="login-orb orb-a"></div><div class="login-orb orb-b"></div>
-    <section class="login-brand">
-      <div class="brand"><div class="brand-icon">▣</div><div><strong>Work Storage</strong><small>Seu cofre digital</small></div></div>
-      <div class="login-copy"><span class="pill">✦ organização silenciosa</span><h1>Tudo que importa.<br><em>Guardado no lugar certo.</em></h1><p>Prompts, credenciais, notas e arquivos em um espaço privado pensado para encontrar informação em segundos.</p></div>
-      <div class="login-meta"><span>Privado</span><span>Organizado</span><span>Sincronizável</span></div>
-    </section>
-    <section class="login-form-wrap">
-      <form id="loginForm" class="login-card">
-        <span class="eyebrow">Cofre bloqueado</span><h2>Volte ao seu espaço</h2><p>Esta tela protege a sessão local. A autenticação definitiva será conectada ao Supabase.</p>
-        <label>E-mail<input id="email" type="email" placeholder="seu@email.com" autocomplete="email" required></label>
-        <label>Senha<div class="password-wrap"><input id="password" type="password" placeholder="Sua senha" autocomplete="current-password" required><button type="button" id="togglePassword" class="icon-btn" aria-label="Mostrar ou ocultar senha">◉</button></div></label>
-        <button class="primary wide" type="submit">Entrar no cofre →</button><small>🔒 Os dados desta versão ficam no armazenamento local do navegador até a conexão com o Supabase.</small>
-      </form>
-    </section>
-  </div>
-
-  <div id="appView" class="app-shell">
-    <div id="sidebarScrim" class="sidebar-scrim" aria-hidden="true"></div>
-    <aside class="sidebar" aria-label="Navegação principal">
-      <div class="brand"><div class="brand-icon">▣</div><div><strong>Work Storage</strong><small>private vault</small></div></div>
-      <nav id="nav">
-        <span class="nav-label">Principal</span>
-        <button data-view="dashboard" class="nav-item active">▦ <span>Visão geral</span></button>
-        <button data-view="vault" class="nav-item">▣ <span>Todo o cofre</span></button>
-        <span class="nav-label">Biblioteca</span>
-        <button data-view="prompts" class="nav-item">▤ <span>Prompts</span></button>
-        <button data-view="passwords" class="nav-item">⌕ <span>Senhas e logins</span></button>
-        <button data-view="notes" class="nav-item">▱ <span>Notas</span></button>
-        <button data-view="files" class="nav-item">♧ <span>Arquivos e links</span></button>
-        <span class="nav-label">Organização</span>
-        <button data-view="favorites" class="nav-item">♡ <span>Favoritos</span></button>
-        <button data-view="history" class="nav-item">◷ <span>Histórico</span></button>
-        <button data-view="trash" class="nav-item">♲ <span>Lixeira</span></button>
-        <button data-view="settings" class="nav-item">⚙ <span>Configurações</span></button>
-      </nav>
-      <div class="sidebar-bottom">
-        <div class="status-dot"><i></i><div><strong>Cofre desbloqueado</strong><small id="sessionStatus">Sessão local ativa</small></div></div>
-        <button id="lockBtn" class="ghost wide">↪ Bloquear agora</button>
-      </div>
-    </aside>
-
-    <main class="main">
-      <header class="topbar">
-        <button id="mobileMenu" class="icon-btn mobile-only" aria-label="Abrir menu">☰</button>
-        <div class="page-context"><small>Work Storage</small><strong id="pageTitle">Visão geral</strong></div>
-        <div class="search"><span>⌕</span><input id="globalSearch" placeholder="Pesquisar em todo o cofre..." aria-label="Pesquisar no cofre"><kbd>⌘K</kbd></div>
-        <button id="quickAdd" class="ghost desktop-only">＋ Novo</button>
-        <button id="themeBtn" class="icon-btn" aria-label="Alternar tema">◐</button>
-        <button id="profileBtn" class="avatar" aria-label="Abrir configurações">WS</button>
-      </header>
-      <section id="content" tabindex="-1"></section>
-    </main>
-    <button id="fab" class="fab" aria-label="Adicionar novo item">＋</button>
-  </div>
-
-  <dialog id="itemDialog">
-    <form id="itemForm" class="modal">
-      <div class="modal-head"><div><span id="itemModeLabel" class="eyebrow">Novo registro</span><h2 id="itemDialogTitle">Adicionar ao cofre</h2></div><button type="button" data-close-dialog="itemDialog" class="icon-btn" aria-label="Fechar">×</button></div>
-      <div class="form-grid two">
-        <label>Tipo<select id="itemType"><option value="prompt">Prompt</option><option value="password">Senha / Login</option><option value="note">Nota</option><option value="link">Link / Referência</option><option value="file">Arquivo / Documento</option></select></label>
-        <label>Título<input id="itemTitle" required placeholder="Ex.: Prompt de pesquisa"></label>
-      </div>
-      <div id="credentialFields" class="credential-fields hidden">
-        <div class="form-grid two"><label>Usuário / e-mail<input id="itemUsername" autocomplete="username" placeholder="nome@exemplo.com"></label><label>Site / serviço<input id="itemUrl" type="url" placeholder="https://..."></label></div>
-        <label>Senha<div class="password-wrap"><input id="itemSecret" type="password" autocomplete="new-password" placeholder="Senha ou chave"><button type="button" id="generatePassword" class="inline-action">Gerar</button><button type="button" id="toggleItemSecret" class="icon-btn mini" aria-label="Mostrar ou ocultar senha">◉</button></div></label>
-      </div>
-      <label id="contentLabel">Conteúdo<textarea id="itemContent" rows="7" placeholder="Cole ou escreva o conteúdo..."></textarea></label>
-      <div class="form-grid two"><label>Tags<input id="itemTags" placeholder="trabalho, ia, importante"></label><label class="check-row"><input id="itemFavorite" type="checkbox"><span>Adicionar aos favoritos</span></label></div>
-      <div class="modal-actions"><button type="button" data-close-dialog="itemDialog" class="ghost">Cancelar</button><button id="saveItem" type="submit" class="primary">Salvar item</button></div>
-    </form>
-  </dialog>
-
-  <dialog id="detailDialog">
-    <div class="modal detail-modal">
-      <div class="modal-head"><div><span id="detailType" class="eyebrow"></span><h2 id="detailTitle"></h2></div><button type="button" data-close-dialog="detailDialog" class="icon-btn" aria-label="Fechar">×</button></div>
-      <div id="detailBody"></div>
-      <div class="modal-actions"><button id="detailFavorite" class="ghost">♡ Favoritar</button><button id="detailEdit" class="ghost">Editar</button><button id="detailDelete" class="danger">Mover para lixeira</button></div>
+  <div id="authView" class="auth-view hidden">
+    <div class="auth-panel">
+      <div class="brand-mark">WS</div>
+      <span class="eyebrow">Work Storage</span>
+      <h1>Seu bloco de notas,<br>em qualquer computador.</h1>
+      <p>Entre com sua conta Google para carregar e sincronizar suas abas.</p>
+      <button id="googleSignIn" class="primary auth-button">Entrar com Google</button>
+      <small>As notas ficam separadas pela sua conta. O site não possui cadastro público próprio.</small>
     </div>
-  </dialog>
+  </div>
 
-  <input id="importInput" type="file" accept="application/json" class="hidden" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <div id="appView" class="workspace hidden">
+    <header class="app-header">
+      <div class="brand" title="Work Storage">
+        <div class="brand-mark small">WS</div>
+        <div class="brand-copy">
+          <strong>Work Storage</strong>
+          <span>notas sincronizadas</span>
+        </div>
+      </div>
+
+      <label class="search-box">
+        <span aria-hidden="true">⌕</span>
+        <input id="searchInput" type="search" placeholder="Buscar nas notas..." autocomplete="off" />
+        <kbd>Ctrl K</kbd>
+      </label>
+
+      <div class="header-actions">
+        <div id="syncState" class="sync-state" title="Estado do salvamento">
+          <i></i><span>Local</span>
+        </div>
+        <button id="themeBtn" class="icon-btn" type="button" title="Alternar tema" aria-label="Alternar tema">◐</button>
+        <button id="menuBtn" class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false">WS</button>
+      </div>
+    </header>
+
+    <div class="tabs-shell">
+      <button id="scrollTabsLeft" class="tab-scroll" type="button" aria-label="Rolar abas para a esquerda">‹</button>
+      <div id="tabs" class="tabs" role="tablist" aria-label="Abas de notas"></div>
+      <button id="newTabBtn" class="new-tab" type="button" title="Nova nota (Ctrl+N)">＋</button>
+      <button id="scrollTabsRight" class="tab-scroll" type="button" aria-label="Rolar abas para a direita">›</button>
+    </div>
+
+    <main class="editor-shell">
+      <section id="emptyState" class="empty-state hidden">
+        <div class="empty-icon">＋</div>
+        <h2>Crie sua primeira nota</h2>
+        <p>Cada nota vira uma aba. Tudo é salvo automaticamente enquanto você digita.</p>
+        <button id="emptyCreateBtn" class="primary" type="button">Criar nota</button>
+      </section>
+
+      <section id="editorView" class="editor-view hidden">
+        <div class="editor-topline">
+          <input id="noteTitle" class="note-title" maxlength="120" placeholder="Sem título" aria-label="Título da nota" />
+          <div class="editor-actions">
+            <button id="pinBtn" class="text-btn" type="button" title="Fixar nota">☆ Fixar</button>
+            <button id="duplicateBtn" class="text-btn" type="button" title="Duplicar nota">Duplicar</button>
+            <button id="deleteBtn" class="text-btn danger-text" type="button" title="Excluir nota">Excluir</button>
+          </div>
+        </div>
+
+        <div class="note-meta">
+          <span id="noteUpdated">Agora</span>
+          <span>•</span>
+          <span id="noteWords">0 palavras</span>
+          <span>•</span>
+          <span id="saveLabel">Salvo</span>
+        </div>
+
+        <textarea id="noteContent" class="note-content" spellcheck="true" placeholder="Comece a escrever..."></textarea>
+      </section>
+    </main>
+
+    <div id="accountMenu" class="account-menu hidden" role="menu">
+      <div class="menu-account">
+        <strong id="accountName">Work Storage</strong>
+        <span id="accountEmail">Modo local</span>
+      </div>
+      <button data-menu-action="new">Nova nota <kbd>Ctrl N</kbd></button>
+      <button data-menu-action="export">Exportar backup</button>
+      <button data-menu-action="import">Importar backup</button>
+      <button data-menu-action="theme">Alternar tema</button>
+      <hr />
+      <button id="signOutBtn" data-menu-action="signout" class="hidden">Sair da conta</button>
+      <div id="firebaseHint" class="firebase-hint hidden">Firebase ainda não configurado. As notas estão sendo salvas somente neste navegador.</div>
+    </div>
+
+    <input id="importInput" type="file" accept="application/json" class="hidden" />
+    <div id="toastRegion" class="toast-region" aria-live="polite"></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="./firebase-config.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

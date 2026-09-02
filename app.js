@@ -1,57 +1,145 @@
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
-const K={items:'ws_items_v2',history:'ws_history_v2',theme:'ws_theme',locked:'ws_locked',settings:'ws_settings_v2'};
-const labels={dashboard:'Visão geral',vault:'Todo o cofre',prompts:'Prompts',passwords:'Senhas e logins',notes:'Notas',files:'Arquivos e links',favorites:'Favoritos',history:'Histórico',trash:'Lixeira',settings:'Configurações'};
-const types={prompt:['Prompt','▤'],password:['Senha / Login','⌕'],note:['Nota','▱'],link:['Link','↗'],file:['Arquivo','♧']};
-const seed=[
-{id:1,type:'prompt',title:'Prompt — Analista de mercado',content:'Pesquise concorrentes, compare posicionamento e sintetize oportunidades.',tags:['ia','pesquisa'],favorite:true,createdAt:Date.now()-864e5,updatedAt:Date.now()-18e5,deletedAt:null,fields:{}},
-{id:2,type:'password',title:'Conta principal',content:'Credencial de exemplo.',tags:['acesso'],favorite:false,createdAt:Date.now()-1728e5,updatedAt:Date.now()-72e5,deletedAt:null,fields:{username:'conta@exemplo.com',secret:'demo-1234',url:'https://example.com'}},
-{id:3,type:'note',title:'Ideias para projeto',content:'Centralizar decisões e próximos passos do Work Storage.',tags:['trabalho'],favorite:true,createdAt:Date.now()-2592e5,updatedAt:Date.now()-864e5,deletedAt:null,fields:{}}
-];
-const read=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??structuredClone(f)}catch{return structuredClone(f)}};
-function loadItems(){const v=read(K.items,null);if(Array.isArray(v))return v;try{const old=JSON.parse(localStorage.getItem('ws_items'));if(Array.isArray(old))return old.map(i=>({...i,createdAt:i.createdAt||Date.now(),updatedAt:i.updatedAt||Date.now(),deletedAt:null,fields:i.fields||{}}))}catch{}return structuredClone(seed)}
-const state={view:'dashboard',items:loadItems(),history:read(K.history,[]),settings:read(K.settings,{autoLock:0}),filter:'all',editing:null,detail:null,timer:null};
-const esc=v=>String(v??'').replace(/[&<>'\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]));
-const active=()=>state.items.filter(i=>!i.deletedAt),trash=()=>state.items.filter(i=>i.deletedAt),item=id=>state.items.find(i=>String(i.id)===String(id));
-const save=()=>{localStorage.setItem(K.items,JSON.stringify(state.items));localStorage.setItem(K.history,JSON.stringify(state.history.slice(0,100)));localStorage.setItem(K.settings,JSON.stringify(state.settings))};
-const when=t=>{const d=new Date(t||Date.now()),n=new Date(),y=new Date(n);y.setDate(n.getDate()-1);const p=d.toDateString()===n.toDateString()?'Hoje':d.toDateString()===y.toDateString()?'Ontem':d.toLocaleDateString('pt-BR');return `${p}, ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`};
-function hist(action,it,detail=''){state.history.unshift({id:Date.now()+Math.random(),action,title:it?.title||'Work Storage',detail,at:Date.now()});save()}
-function toast(msg,tone='success'){const n=document.createElement('div');n.className=`toast ${tone}`;n.textContent=msg;$('#toastRegion').append(n);setTimeout(()=>n.remove(),2400)}
-function copy(text,label='Conteúdo'){if(!text)return toast('Nada para copiar.','error');const done=()=>toast(`${label} copiado.`);navigator.clipboard?.writeText(text).then(done).catch(()=>{const a=document.createElement('textarea');a.value=text;document.body.append(a);a.select();document.execCommand('copy');a.remove();done()})}
-function go(v){state.filter='all';$('#globalSearch').value='';location.hash=labels[v]?v:'dashboard';closeMenu()}
-function meta(i){return types[i.type]||[i.type,'•']}
-function card(i){const [label,icon]=meta(i),trashed=!!i.deletedAt,sub=i.type==='password'?(i.fields?.username||i.content||'Credencial protegida'):(i.content||i.fields?.url||'Sem descrição');const tags=(i.tags||[]).slice(0,3).map(t=>`<span class="tag">#${esc(t)}</span>`).join('');const actions=trashed?`<button class="action-btn" data-action="restore" data-id="${i.id}" title="Restaurar">↺</button><button class="action-btn" data-action="purge" data-id="${i.id}" title="Excluir definitivamente">×</button>`:`<button class="action-btn ${i.favorite?'active':''}" data-action="favorite" data-id="${i.id}" title="Favoritar">${i.favorite?'★':'☆'}</button><button class="action-btn" data-action="copy" data-id="${i.id}" title="Copiar">⧉</button><button class="action-btn" data-action="edit" data-id="${i.id}" title="Editar">✎</button><button class="action-btn" data-action="delete" data-id="${i.id}" title="Lixeira">♲</button>`;return `<article class="item-card"><div class="item-main" data-action="open" data-id="${i.id}" tabindex="0"><div class="item-title-row"><span>${icon}</span><h3>${esc(i.title)}</h3></div><p>${esc(sub)}</p><div class="item-meta"><span class="badge">${esc(label)}</span>${tags}<span class="tag">${esc(when(i.updatedAt))}</span></div></div><div class="item-actions">${actions}</div></article>`}
-const empty=(a,b,button=true)=>`<div class="empty"><strong>${esc(a)}</strong><span>${esc(b)}</span>${button?'<div style="margin-top:14px"><button class="ghost" data-action="new">＋ Adicionar item</button></div>':''}</div>`;
-const metric=(a,n,v)=>`<button class="metric" data-go="${v}"><small>${a}</small><strong>${n}</strong></button>`;
-function dashboard(){const a=active(),recent=[...a].sort((x,y)=>y.updatedAt-x.updatedAt).slice(0,5);return `<div class="hero"><div><span class="eyebrow">Seu espaço privado</span><h1>Seu cofre, sem bagunça.</h1><p>Guarde prompts, acessos, notas e referências. Encontre tudo por tipo, tag ou pesquisa.</p></div><div class="hero-actions"><button class="ghost" data-go="vault">Explorar cofre</button><button class="primary" data-action="new">＋ Novo item</button></div></div><div class="metrics">${metric('Todos os itens',a.length,'vault')}${metric('Prompts',a.filter(i=>i.type==='prompt').length,'prompts')}${metric('Senhas e logins',a.filter(i=>i.type==='password').length,'passwords')}${metric('Favoritos',a.filter(i=>i.favorite).length,'favorites')}</div><div class="grid-2"><div class="panel"><div class="panel-head"><div><h2>Recentes</h2><div class="panel-sub">Últimos conteúdos modificados</div></div><button class="ghost" data-go="vault">Ver todos</button></div><div class="items">${recent.map(card).join('')||empty('Seu cofre está vazio.','Crie o primeiro registro.')}</div></div><div class="panel"><div class="panel-head"><div><h2>Acesso rápido</h2><div class="panel-sub">Atalhos para suas áreas</div></div></div><div class="quick-list">${[['prompts','▤ Prompts','Copiar e reutilizar'],['passwords','⌕ Senhas e logins','Credenciais separadas'],['notes','▱ Notas','Ideias e textos'],['settings','⚙ Configurações','Backup e preferências']].map(x=>`<button class="quick-btn" data-go="${x[0]}"><span><strong>${x[1]}</strong><small>${x[2]}</small></span><span>→</span></button>`).join('')}</div></div></div>`}
-function list(v){let a=active();if(v==='prompts')a=a.filter(i=>i.type==='prompt');if(v==='passwords')a=a.filter(i=>i.type==='password');if(v==='notes')a=a.filter(i=>i.type==='note');if(v==='files')a=a.filter(i=>['file','link'].includes(i.type));if(v==='favorites')a=a.filter(i=>i.favorite);if(state.filter==='favorites')a=a.filter(i=>i.favorite);if(state.filter==='recent')a=a.filter(i=>Date.now()-i.updatedAt<6048e5);a.sort((x,y)=>y.updatedAt-x.updatedAt);const desc={vault:'Todos os registros ativos.',prompts:'Prompts prontos para copiar e editar.',passwords:'Acessos com usuário, site e senha separados.',notes:'Textos, ideias e lembretes.',files:'Links e documentos catalogados.',favorites:'Itens marcados para acesso rápido.'}[v];return `<div class="hero"><div><span class="eyebrow">Biblioteca</span><h1>${labels[v]}</h1><p>${desc}</p></div><div class="hero-actions"><button class="primary" data-action="new" data-prefill="${v}">＋ Novo item</button></div></div><div class="toolbar"><div class="toolbar-left"><div class="segmented"><button data-filter="all" class="${state.filter==='all'?'active':''}">Todos</button><button data-filter="recent" class="${state.filter==='recent'?'active':''}">Recentes</button><button data-filter="favorites" class="${state.filter==='favorites'?'active':''}">Favoritos</button></div><span class="section-count">${a.length} item(ns)</span></div><div class="toolbar-right"><button class="ghost" data-action="export">Exportar</button></div></div><div class="panel"><div class="items">${a.map(card).join('')||empty('Nada por aqui ainda.','Adicione um conteúdo ou altere o filtro.')}</div></div>`}
-function history(){const rows=state.history.slice(0,40).map(h=>`<div class="history-row"><div class="history-icon">${({create:'＋',edit:'✎',delete:'♲',restore:'↺',favorite:'★',purge:'×',import:'⇧'}[h.action]||'•')}</div><div><strong>${esc(h.title)}</strong><p>${esc(h.detail)}</p></div><time>${esc(when(h.at))}</time></div>`).join('');return `<div class="hero"><div><span class="eyebrow">Rastreamento local</span><h1>Histórico</h1><p>Criações, edições, favoritos, restaurações e exclusões feitas neste navegador.</p></div><button class="ghost" data-action="clear-history">Limpar histórico</button></div><div class="panel" style="margin-top:24px">${rows||empty('Nenhuma alteração registrada.','As próximas ações aparecerão aqui.',false)}</div>`}
-function trashView(){const a=[...trash()].sort((x,y)=>y.deletedAt-x.deletedAt);return `<div class="hero"><div><span class="eyebrow">Recuperação</span><h1>Lixeira</h1><p>Restaure itens ou remova-os definitivamente.</p></div>${a.length?'<button class="danger" data-action="empty-trash">Esvaziar lixeira</button>':''}</div><div class="panel" style="margin-top:24px"><div class="items">${a.map(card).join('')||empty('A lixeira está vazia.','Itens removidos aparecerão aqui.',false)}</div></div>`}
-function settings(){const kb=Math.max(1,Math.round(new Blob([JSON.stringify(state.items)]).size/1024));return `<div class="hero"><div><span class="eyebrow">Preferências</span><h1>Configurações</h1><p>Aparência, bloqueio e backups do cofre local.</p></div></div><div class="settings-grid" style="margin-top:24px"><section class="setting-card"><h3>Aparência</h3><p>O tema fica salvo neste navegador.</p><button class="ghost" data-action="theme">Alternar tema</button></section><section class="setting-card"><h3>Bloqueio automático</h3><p>Bloqueia a interface após inatividade.</p><select id="autoLockSelect"><option value="0">Desativado</option><option value="5">5 minutos</option><option value="15">15 minutos</option><option value="30">30 minutos</option></select></section><section class="setting-card"><h3>Backup local</h3><p>Exporte tudo para JSON ou restaure um backup.</p><div class="hero-actions"><button class="ghost" data-action="export">Exportar</button><button class="ghost" data-action="import">Importar</button></div></section><section class="setting-card"><h3>Armazenamento local</h3><p>${kb} KB usados atualmente. Depois isso será sincronizado com Supabase.</p></section><section class="setting-card"><h3>Sessão</h3><p>Proteja a tela ao sair do computador.</p><button class="ghost" data-action="lock">Bloquear agora</button></section><section class="setting-card"><h3>Zona de risco</h3><p>Apaga os dados locais e volta aos exemplos iniciais.</p><button class="danger" data-action="reset">Limpar dados locais</button></section></div>`}
-function search(q){q=q.trim().toLowerCase();const a=active().filter(i=>`${i.title} ${i.content||''} ${(i.tags||[]).join(' ')} ${i.fields?.username||''} ${i.fields?.url||''}`.toLowerCase().includes(q));return `<div class="hero"><div><span class="eyebrow">Pesquisa global</span><h1>Resultados</h1><p>${a.length} item(ns) encontrado(s) para “${esc(q)}”.</p></div></div><div class="panel" style="margin-top:24px"><div class="items">${a.map(card).join('')||empty('Nenhum resultado.','Tente outro termo.',false)}</div></div>`}
-function render(){state.view=labels[location.hash.slice(1)]?location.hash.slice(1):'dashboard';$$('.nav-item[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===state.view));$('#pageTitle').textContent=labels[state.view];const q=$('#globalSearch').value.trim();$('#content').innerHTML=q?search(q):state.view==='dashboard'?dashboard():['vault','prompts','passwords','notes','files','favorites'].includes(state.view)?list(state.view):state.view==='history'?history():state.view==='trash'?trashView():settings();$$('[data-filter]').forEach(b=>b.onclick=()=>{state.filter=b.dataset.filter;render()});const s=$('#autoLockSelect');if(s){s.value=String(state.settings.autoLock||0);s.onchange=()=>{state.settings.autoLock=Number(s.value);save();resetTimer();toast('Bloqueio atualizado.')}};$$('.item-main').forEach(el=>el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetail(el.dataset.id)}});resetTimer()}
-function act(a,id,prefill){if(a==='new')return openItem(null,prefill);if(a==='open')return openDetail(id);if(a==='favorite')return favorite(id);if(a==='copy')return copyItem(id);if(a==='edit')return openItem(id);if(a==='delete')return remove(id);if(a==='restore')return restore(id);if(a==='purge')return purge(id);if(a==='export')return exportData();if(a==='import')return $('#importInput').click();if(a==='theme')return theme();if(a==='lock')return lock();if(a==='reset')return reset();if(a==='clear-history'){if(confirm('Limpar histórico?')){state.history=[];save();render();toast('Histórico limpo.')}}if(a==='empty-trash'){if(confirm('Esvaziar a lixeira definitivamente?')){state.items=active();save();render();toast('Lixeira esvaziada.')}}}
-function openItem(id,prefill=''){const i=id?item(id):null;state.editing=i?.id||null;$('#itemModeLabel').textContent=i?'Editar registro':'Novo registro';$('#itemDialogTitle').textContent=i?'Editar item':'Adicionar ao cofre';$('#itemType').value=i?.type||({prompts:'prompt',passwords:'password',notes:'note',files:'link'}[prefill]||'prompt');$('#itemTitle').value=i?.title||'';$('#itemContent').value=i?.content||'';$('#itemTags').value=(i?.tags||[]).join(', ');$('#itemFavorite').checked=!!i?.favorite;$('#itemUsername').value=i?.fields?.username||'';$('#itemSecret').value=i?.fields?.secret||'';$('#itemUrl').value=i?.fields?.url||'';$('#itemSecret').type='password';formType();$('#itemDialog').showModal();setTimeout(()=>$('#itemTitle').focus(),50)}
-function formType(){const p=$('#itemType').value==='password';$('#credentialFields').classList.toggle('hidden',!p)}
-$('#itemForm').onsubmit=e=>{e.preventDefault();const title=$('#itemTitle').value.trim();if(!title)return toast('Informe um título.','error');const old=state.editing?item(state.editing):null,n={id:old?.id||Date.now(),type:$('#itemType').value,title,content:$('#itemContent').value.trim(),tags:$('#itemTags').value.split(',').map(x=>x.trim()).filter(Boolean),favorite:$('#itemFavorite').checked,createdAt:old?.createdAt||Date.now(),updatedAt:Date.now(),deletedAt:old?.deletedAt||null,fields:$('#itemType').value==='password'?{username:$('#itemUsername').value.trim(),secret:$('#itemSecret').value,url:$('#itemUrl').value.trim()}:old?.fields||{}};if(old){Object.assign(old,n);hist('edit',old,'Item atualizado.');toast('Item atualizado.')}else{state.items.unshift(n);hist('create',n,'Item adicionado ao cofre.');toast('Item salvo.')}save();$('#itemDialog').close();$('#itemForm').reset();state.editing=null;render()};
-function openDetail(id){const i=item(id);if(!i||i.deletedAt)return;state.detail=i.id;const [label]=meta(i);$('#detailType').textContent=label;$('#detailTitle').textContent=i.title;let x='';if(i.type==='password')x=`<div class="detail-grid"><div class="detail-field"><small>Usuário / e-mail</small><strong>${esc(i.fields?.username||'Não informado')}</strong><div class="copy-row"><button class="ghost" data-dcopy="username">Copiar</button></div></div><div class="detail-field"><small>Site / serviço</small><strong>${esc(i.fields?.url||'Não informado')}</strong>${i.fields?.url?'<div class="copy-row"><button class="ghost" data-open-url>Visitar site</button></div>':''}</div></div><div class="detail-field"><small>Senha / chave</small><strong id="detailSecret">••••••••••••</strong><div class="copy-row"><button class="ghost" data-reveal>Mostrar</button><button class="ghost" data-dcopy="secret">Copiar senha</button></div></div>`;$('#detailBody').innerHTML=`${x}${i.content?`<div style="margin-top:12px"><span class="eyebrow">Conteúdo</span><div class="detail-content" style="margin-top:7px">${esc(i.content)}</div><div class="copy-row"><button class="ghost" data-dcopy="content">Copiar conteúdo</button></div></div>`:''}<div class="item-meta" style="margin-top:14px">${(i.tags||[]).map(t=>`<span class="tag">#${esc(t)}</span>`).join('')}</div>`;$('#detailFavorite').textContent=i.favorite?'★ Remover favorito':'☆ Favoritar';if(!$('#detailDialog').open)$('#detailDialog').showModal();$$('[data-dcopy]').forEach(b=>b.onclick=()=>copy(b.dataset.dcopy==='content'?i.content:i.fields?.[b.dataset.dcopy],b.dataset.dcopy==='secret'?'Senha':'Conteúdo'));$('[data-reveal]')?.addEventListener('click',e=>{const h=$('#detailSecret').textContent.includes('•');$('#detailSecret').textContent=h?(i.fields?.secret||'Não informado'):'••••••••••••';e.currentTarget.textContent=h?'Ocultar':'Mostrar'});$('[data-open-url]')?.addEventListener('click',()=>window.open(i.fields.url,'_blank','noopener'))}
-function favorite(id){const i=item(id);if(!i)return;i.favorite=!i.favorite;i.updatedAt=Date.now();hist('favorite',i,i.favorite?'Adicionado aos favoritos.':'Removido dos favoritos.');save();render();toast(i.favorite?'Favoritado.':'Removido dos favoritos.')}
-function copyItem(id){const i=item(id);copy(i?.type==='password'?(i.fields?.secret||i.fields?.username||i.content):i?.content,i?.type==='password'?'Senha':'Conteúdo')}
-function remove(id){const i=item(id);if(!i)return;i.deletedAt=Date.now();i.updatedAt=Date.now();hist('delete',i,'Movido para a lixeira.');save();render();toast('Movido para a lixeira.')}
-function restore(id){const i=item(id);if(!i)return;i.deletedAt=null;i.updatedAt=Date.now();hist('restore',i,'Item restaurado.');save();render();toast('Item restaurado.')}
-function purge(id){const i=item(id);if(!i||!confirm(`Excluir “${i.title}” definitivamente?`))return;hist('purge',i,'Excluído definitivamente.');state.items=state.items.filter(x=>String(x.id)!==String(id));save();render();toast('Excluído definitivamente.')}
-function exportData(){const data={version:2,exportedAt:new Date().toISOString(),items:state.items,history:state.history,settings:state.settings},blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`work-storage-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(url);toast('Backup exportado.')}
-$('#importInput').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{const p=JSON.parse(await f.text()),items=Array.isArray(p)?p:p.items;if(!Array.isArray(items))throw 0;if(!confirm(`Importar ${items.length} item(ns) e substituir os atuais?`))return;state.items=items;state.history=Array.isArray(p.history)?p.history:[];state.settings=p.settings||state.settings;hist('import',{title:'Backup importado'},`${items.length} item(ns) carregado(s).`);save();render();toast('Backup importado.')}catch{toast('Backup inválido.','error')}finally{e.target.value=''}};
-function theme(){const light=document.body.classList.toggle('light');localStorage.setItem(K.theme,light?'light':'dark');toast(light?'Tema claro ativado.':'Tema escuro ativado.')}
-function lock(){localStorage.setItem(K.locked,'1');$('#appView').classList.add('hidden');$('#loginView').classList.remove('hidden');$('#password').value='';clearTimeout(state.timer)}
-function unlock(){localStorage.setItem(K.locked,'0');$('#loginView').classList.add('hidden');$('#appView').classList.remove('hidden');render()}
-function resetTimer(){clearTimeout(state.timer);const m=Number(state.settings.autoLock||0);if(m>0&&!$('#appView').classList.contains('hidden'))state.timer=setTimeout(lock,m*6e4)}
-function reset(){if(!confirm('Apagar os dados locais deste navegador?'))return;state.items=structuredClone(seed);state.history=[];state.settings={autoLock:0};save();render();toast('Dados locais restaurados.')}
-function openMenu(){$('.sidebar').classList.add('open');$('#appView').classList.add('menu-open')}function closeMenu(){$('.sidebar').classList.remove('open');$('#appView').classList.remove('menu-open')}
-$('#content').onclick=e=>{const a=e.target.closest('[data-action]'),g=e.target.closest('[data-go]');if(a)act(a.dataset.action,a.dataset.id,a.dataset.prefill);else if(g)go(g.dataset.go)};
-$('#nav').onclick=e=>{const b=e.target.closest('[data-view]');if(b)go(b.dataset.view)};window.onhashchange=render;
-$('#globalSearch').oninput=render;$('#globalSearch').onkeydown=e=>{if(e.key==='Escape'){e.currentTarget.value='';render();e.currentTarget.blur()}};
-$('#itemType').onchange=formType;$('#generatePassword').onclick=()=>{const a='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';$('#itemSecret').value=Array.from({length:20},()=>a[Math.floor(Math.random()*a.length)]).join('');$('#itemSecret').type='text';toast('Senha forte gerada.')};$('#toggleItemSecret').onclick=()=>$('#itemSecret').type=$('#itemSecret').type==='password'?'text':'password';
-$$('[data-close-dialog]').forEach(b=>b.onclick=()=>$('#'+b.dataset.closeDialog).close());$('#detailFavorite').onclick=()=>{favorite(state.detail);const i=item(state.detail);$('#detailFavorite').textContent=i?.favorite?'★ Remover favorito':'☆ Favoritar'};$('#detailEdit').onclick=()=>{$('#detailDialog').close();openItem(state.detail)};$('#detailDelete').onclick=()=>{const id=state.detail;$('#detailDialog').close();remove(id)};
-$('#themeBtn').onclick=theme;$('#lockBtn').onclick=lock;$('#loginForm').onsubmit=e=>{e.preventDefault();unlock();toast('Cofre desbloqueado.')};$('#togglePassword').onclick=()=>$('#password').type=$('#password').type==='password'?'text':'password';$('#fab').onclick=()=>openItem();$('#quickAdd').onclick=()=>openItem();$('#profileBtn').onclick=()=>go('settings');$('#mobileMenu').onclick=()=>$('.sidebar').classList.contains('open')?closeMenu():openMenu();$('#sidebarScrim').onclick=closeMenu;
-document.onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#globalSearch').focus()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='n'){e.preventDefault();openItem()}if(e.key==='Escape')closeMenu()};['click','keydown','touchstart'].forEach(x=>document.addEventListener(x,resetTimer,{passive:true}));
-if(localStorage.getItem(K.theme)==='light')document.body.classList.add('light');if(localStorage.getItem(K.locked)==='1')lock();else unlock();render();
+const STORAGE_KEY='ws_notebook_v1';
+const THEME_KEY='ws_theme';
+const ACTIVE_KEY='ws_active_note';
+const firebaseConfig=window.WORK_STORAGE_FIREBASE_CONFIG||{};
+const firebaseReady=Boolean(firebaseConfig.apiKey&&firebaseConfig.projectId&&firebaseConfig.authDomain);
+let db=null,auth=null,unsubscribeCloud=null,saveTimer=null,ignoreCloud=false;
+const state={notes:[],activeId:null,user:null,cloud:firebaseReady,query:'',saving:false};
+
+const uid=()=>state.user?.uid||null;
+const now=()=>Date.now();
+const makeId=()=>crypto.randomUUID?.()||`n_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+const noteTemplate=(title='Nova nota',content='')=>({id:makeId(),title,content,pinned:false,createdAt:now(),updatedAt:now()});
+const escapeHtml=(v='')=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function readLocal(){
+  try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY));if(Array.isArray(saved))return saved}catch{}
+  const migrated=migrateOldData();
+  if(migrated.length)return migrated;
+  return [noteTemplate('Bem-vindo ao Work Storage','Este é seu bloco de notas em abas.\n\n• Use Ctrl+N para criar uma nota.\n• Use Ctrl+K para pesquisar.\n• Tudo é salvo automaticamente.\n\nQuando o Firebase estiver conectado, suas notas também aparecerão em outros computadores.')];
+}
+function migrateOldData(){
+  for(const key of ['ws_items_v2','ws_items']){
+    try{
+      const items=JSON.parse(localStorage.getItem(key));
+      if(!Array.isArray(items))continue;
+      const notes=items.filter(i=>!i.deletedAt).map(i=>({
+        id:String(i.id||makeId()),title:i.title||'Sem título',content:[i.content,i.fields?.username&&`Usuário: ${i.fields.username}`,i.fields?.url&&`Link: ${i.fields.url}`].filter(Boolean).join('\n\n'),pinned:Boolean(i.favorite),createdAt:Number(i.createdAt)||now(),updatedAt:Number(i.updatedAt)||now()
+      }));
+      if(notes.length)return notes;
+    }catch{}
+  }
+  return [];
+}
+function persistLocal(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state.notes));if(state.activeId)localStorage.setItem(ACTIVE_KEY,state.activeId)}
+function activeNote(){return state.notes.find(n=>n.id===state.activeId)||null}
+function sortNotes(notes=[...state.notes]){return notes.sort((a,b)=>Number(b.pinned)-Number(a.pinned)||(b.updatedAt||0)-(a.updatedAt||0))}
+function formatTime(ts){if(!ts)return'Agora';const d=new Date(ts),today=new Date();const same=d.toDateString()===today.toDateString();return same?`Hoje, ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`:d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}
+function wordCount(text=''){const t=text.trim();return t?t.split(/\s+/).length:0}
+function toast(message,tone=''){const el=document.createElement('div');el.className=`toast ${tone}`;el.textContent=message;$('#toastRegion').append(el);setTimeout(()=>el.remove(),2200)}
+
+function setSync(mode,label){const el=$('#syncState');el.className=`sync-state ${mode||''}`;el.querySelector('span').textContent=label;$('#saveLabel').textContent=label}
+function updateAccountUI(){
+  if(state.user){$('#accountName').textContent=state.user.displayName||'Sua conta';$('#accountEmail').textContent=state.user.email||'';$('#menuBtn').textContent=(state.user.displayName||state.user.email||'WS').split(/\s|@/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase();$('#signOutBtn').classList.remove('hidden');$('#firebaseHint').classList.add('hidden')}
+  else{$('#accountName').textContent='Work Storage';$('#accountEmail').textContent=firebaseReady?'Não conectado':'Modo local';$('#menuBtn').textContent='WS';$('#signOutBtn').classList.add('hidden');$('#firebaseHint').classList.toggle('hidden',firebaseReady)}
+}
+function renderTabs(){
+  const q=state.query.trim().toLowerCase();
+  let notes=sortNotes();
+  if(q)notes=notes.filter(n=>`${n.title} ${n.content}`.toLowerCase().includes(q));
+  $('#tabs').innerHTML=notes.map(n=>`<button class="note-tab ${n.id===state.activeId?'active':''}" role="tab" aria-selected="${n.id===state.activeId}" data-note-id="${escapeHtml(n.id)}" draggable="true"><span class="tab-pin">${n.pinned?'★':''}</span><span class="tab-title">${escapeHtml(n.title||'Sem título')}</span><span class="tab-close" data-close-note="${escapeHtml(n.id)}" title="Excluir nota">×</span></button>`).join('');
+  if(q&&!notes.length)$('#tabs').innerHTML='<div style="padding:10px 12px;color:var(--muted);font-size:11px">Nenhuma nota encontrada</div>';
+}
+function renderEditor(){
+  const n=activeNote();
+  $('#emptyState').classList.toggle('hidden',Boolean(n));
+  $('#editorView').classList.toggle('hidden',!n);
+  if(!n)return;
+  if(document.activeElement!==$('#noteTitle'))$('#noteTitle').value=n.title||'';
+  if(document.activeElement!==$('#noteContent'))$('#noteContent').value=n.content||'';
+  $('#pinBtn').textContent=n.pinned?'★ Fixada':'☆ Fixar';
+  $('#noteUpdated').textContent=formatTime(n.updatedAt);
+  $('#noteWords').textContent=`${wordCount(n.content)} ${wordCount(n.content)===1?'palavra':'palavras'}`;
+  autoGrow();
+}
+function render(){renderTabs();renderEditor();updateAccountUI();if(!state.notes.length){state.activeId=null;renderTabs();renderEditor()}}
+
+function createNote(title='Nova nota',content=''){
+  const n=noteTemplate(title,content);state.notes.unshift(n);state.activeId=n.id;persistLocal();render();queueCloudSave(n);requestAnimationFrame(()=>{$('#noteTitle').focus();$('#noteTitle').select()});return n
+}
+function updateCurrent(patch){const n=activeNote();if(!n)return;Object.assign(n,patch,{updatedAt:now()});persistLocal();state.saving=true;setSync('saving',state.user?'Salvando...':'Salvando local...');renderTabs();$('#noteUpdated').textContent=formatTime(n.updatedAt);$('#noteWords').textContent=`${wordCount(n.content)} ${wordCount(n.content)===1?'palavra':'palavras'}`;queueCloudSave(n)}
+function deleteNote(id=state.activeId){const n=state.notes.find(x=>x.id===id);if(!n)return;if(!confirm(`Excluir “${n.title||'Sem título'}”?`))return;state.notes=state.notes.filter(x=>x.id!==id);if(state.activeId===id)state.activeId=sortNotes()[0]?.id||null;persistLocal();render();if(state.user&&db)db.doc(`users/${uid()}/notes/${id}`).delete().catch(()=>toast('Não foi possível excluir na nuvem.','error'));toast('Nota excluída.')}
+function duplicateNote(){const n=activeNote();if(!n)return;createNote(`${n.title||'Sem título'} — cópia`,n.content||'')}
+function togglePin(){const n=activeNote();if(!n)return;n.pinned=!n.pinned;updateCurrent({pinned:n.pinned});render()}
+
+function queueCloudSave(note){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    if(!state.user||!db){state.saving=false;setSync('',firebaseReady?'Aguardando login':'Salvo local');return}
+    try{
+      await db.doc(`users/${uid()}/notes/${note.id}`).set({...note,userId:uid()}, {merge:true});
+      state.saving=false;setSync('cloud','Sincronizado');
+    }catch(err){console.error(err);state.saving=false;setSync('error','Erro ao sincronizar')}
+  },550)
+}
+
+async function initFirebase(){
+  if(!firebaseReady){state.cloud=false;$('#authView').classList.add('hidden');$('#appView').classList.remove('hidden');setSync('','Salvo local');updateAccountUI();return}
+  try{
+    firebase.initializeApp(firebaseConfig);auth=firebase.auth();db=firebase.firestore();
+    db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+    auth.onAuthStateChanged(async user=>{
+      state.user=user||null;updateAccountUI();
+      if(user){$('#authView').classList.add('hidden');$('#appView').classList.remove('hidden');setSync('saving','Carregando...');await startCloudSync()}
+      else{if(unsubscribeCloud){unsubscribeCloud();unsubscribeCloud=null}$('#appView').classList.add('hidden');$('#authView').classList.remove('hidden')}
+    });
+  }catch(err){console.error(err);state.cloud=false;$('#authView').classList.add('hidden');$('#appView').classList.remove('hidden');setSync('error','Firebase indisponível');toast('Firebase não iniciou. Usando salvamento local.','error')}
+}
+async function startCloudSync(){
+  const col=db.collection(`users/${uid()}/notes`);
+  const first=await col.get();
+  if(first.empty&&state.notes.length){
+    const batch=db.batch();state.notes.forEach(n=>batch.set(col.doc(n.id),{...n,userId:uid()}));await batch.commit();
+  }
+  if(unsubscribeCloud)unsubscribeCloud();
+  unsubscribeCloud=col.onSnapshot(snapshot=>{
+    if(ignoreCloud)return;
+    const incoming=snapshot.docs.map(d=>({id:d.id,...d.data()}));
+    if(incoming.length||snapshot.empty){state.notes=incoming;const saved=localStorage.getItem(ACTIVE_KEY);if(!state.notes.some(n=>n.id===state.activeId))state.activeId=state.notes.find(n=>n.id===saved)?.id||sortNotes()[0]?.id||null;persistLocal();render();setSync('cloud','Sincronizado')}
+  },err=>{console.error(err);setSync('error','Erro de sincronização')});
+}
+async function signInGoogle(){try{const provider=new firebase.auth.GoogleAuthProvider();await auth.signInWithPopup(provider)}catch(err){console.error(err);toast('Não foi possível entrar com Google.','error')}}
+async function signOut(){if(auth)await auth.signOut()}
+
+function exportBackup(){const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),notes:state.notes},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`work-storage-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(url);toast('Backup exportado.')}
+async function importBackup(file){try{const data=JSON.parse(await file.text()),notes=Array.isArray(data)?data:data.notes;if(!Array.isArray(notes))throw new Error();if(!confirm(`Importar ${notes.length} nota(s) e substituir as atuais?`))return;state.notes=notes.map(n=>({...noteTemplate(),...n,id:String(n.id||makeId()),updatedAt:Number(n.updatedAt)||now()}));state.activeId=sortNotes()[0]?.id||null;persistLocal();render();if(state.user&&db){const col=db.collection(`users/${uid()}/notes`);const current=await col.get();let batch=db.batch();current.docs.forEach(d=>batch.delete(d.ref));state.notes.forEach(n=>batch.set(col.doc(n.id),{...n,userId:uid()}));await batch.commit()}toast('Backup importado.')}catch{toast('Arquivo de backup inválido.','error')}}
+function toggleTheme(){const light=document.body.classList.toggle('light');localStorage.setItem(THEME_KEY,light?'light':'dark')}
+function toggleMenu(force){const menu=$('#accountMenu'),show=typeof force==='boolean'?force:menu.classList.contains('hidden');menu.classList.toggle('hidden',!show);$('#menuBtn').setAttribute('aria-expanded',String(show))}
+function autoGrow(){const t=$('#noteContent');t.style.height='auto';t.style.height=Math.max(460,t.scrollHeight)+'px'}
+
+$('#tabs').addEventListener('click',e=>{const close=e.target.closest('[data-close-note]');if(close){e.stopPropagation();deleteNote(close.dataset.closeNote);return}const tab=e.target.closest('[data-note-id]');if(tab){state.activeId=tab.dataset.noteId;localStorage.setItem(ACTIVE_KEY,state.activeId);render()}});
+$('#newTabBtn').onclick=()=>createNote();$('#emptyCreateBtn').onclick=()=>createNote();
+$('#noteTitle').addEventListener('input',e=>updateCurrent({title:e.target.value}));
+$('#noteContent').addEventListener('input',e=>{updateCurrent({content:e.target.value});autoGrow()});
+$('#pinBtn').onclick=togglePin;$('#duplicateBtn').onclick=duplicateNote;$('#deleteBtn').onclick=()=>deleteNote();
+$('#searchInput').addEventListener('input',e=>{state.query=e.target.value;renderTabs()});
+$('#themeBtn').onclick=toggleTheme;$('#menuBtn').onclick=e=>{e.stopPropagation();toggleMenu()};
+$('#googleSignIn').onclick=signInGoogle;$('#signOutBtn').onclick=signOut;
+$('#accountMenu').addEventListener('click',e=>{const b=e.target.closest('[data-menu-action]');if(!b)return;const a=b.dataset.menuAction;if(a==='new')createNote();if(a==='export')exportBackup();if(a==='import')$('#importInput').click();if(a==='theme')toggleTheme();if(a==='signout')signOut();toggleMenu(false)});
+$('#importInput').addEventListener('change',async e=>{const f=e.target.files?.[0];if(f)await importBackup(f);e.target.value=''});
+$('#scrollTabsLeft').onclick=()=>$('#tabs').scrollBy({left:-260,behavior:'smooth'});$('#scrollTabsRight').onclick=()=>$('#tabs').scrollBy({left:260,behavior:'smooth'});
+document.addEventListener('click',e=>{if(!e.target.closest('#accountMenu')&&!e.target.closest('#menuBtn'))toggleMenu(false)});
+document.addEventListener('keydown',e=>{
+  const mod=e.ctrlKey||e.metaKey;
+  if(mod&&e.key.toLowerCase()==='n'){e.preventDefault();createNote()}
+  if(mod&&e.key.toLowerCase()==='k'){e.preventDefault();$('#searchInput').focus();$('#searchInput').select()}
+  if(mod&&e.key.toLowerCase()==='s'){e.preventDefault();const n=activeNote();if(n)queueCloudSave(n);toast(state.user?'Sincronização solicitada.':'Nota salva localmente.')}
+  if(mod&&e.key==='Tab'){e.preventDefault();const sorted=sortNotes();const i=sorted.findIndex(n=>n.id===state.activeId);const next=e.shiftKey?(i-1+sorted.length)%sorted.length:(i+1)%sorted.length;if(sorted[next]){state.activeId=sorted[next].id;render()}}
+  if(e.key==='Escape'){state.query='';$('#searchInput').value='';renderTabs();toggleMenu(false)}
+});
+
+if(localStorage.getItem(THEME_KEY)==='light')document.body.classList.add('light');
+state.notes=readLocal();
+state.activeId=state.notes.find(n=>n.id===localStorage.getItem(ACTIVE_KEY))?.id||sortNotes()[0]?.id||null;
+persistLocal();render();initFirebase();
