@@ -28,7 +28,7 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir _site
-          cp index.html styles.css app.js firebase-config.js auth-fix.js shortcuts.js _site/
+          cp index.html styles.css workspace.js firebase-config.js auth-fix.js _site/
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3
         with:
