@@ -3,109 +3,201 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#111315" />
+  <meta name="theme-color" content="#0f1113" />
   <meta name="color-scheme" content="dark light" />
   <title>Work Storage</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <div id="authView" class="auth-view hidden">
-    <div class="auth-panel">
-      <div class="brand-mark">WS</div>
+  <section id="authView" class="gate-view hidden">
+    <div class="gate-shell">
+      <div class="brand-mark gate-logo">WS</div>
       <span class="eyebrow">Work Storage</span>
-      <h1>Seu bloco de notas,<br>em qualquer computador.</h1>
-      <p>Entre com sua conta Google para carregar e sincronizar suas abas.</p>
-      <button id="googleSignIn" class="primary auth-button">Entrar com Google</button>
-      <small>As notas ficam separadas pela sua conta. O site não possui cadastro público próprio.</small>
+      <h1>Seu espaço pessoal.<br>Organizado do seu jeito.</h1>
+      <p>Centralize notas, acessos, links, arquivos, prompts, checklists e informações importantes em um único workspace sincronizado.</p>
+      <button id="googleSignIn" class="primary gate-button" type="button">Entrar com Google</button>
+      <small>Seus dados ficam vinculados à sua conta e o conteúdo do workspace pode ser protegido com senha mestra.</small>
     </div>
-  </div>
+  </section>
+
+  <section id="lockView" class="gate-view hidden">
+    <div class="gate-shell lock-shell">
+      <div class="brand-mark gate-logo">WS</div>
+      <span id="lockEyebrow" class="eyebrow">Workspace protegido</span>
+      <h1 id="lockTitle">Desbloquear Work Storage</h1>
+      <p id="lockText">Digite sua senha mestra para descriptografar seus itens neste dispositivo.</p>
+      <form id="masterForm" class="master-form">
+        <label>Senha mestra
+          <input id="masterPassword" type="password" autocomplete="current-password" required />
+        </label>
+        <label id="masterConfirmWrap" class="hidden">Confirmar senha
+          <input id="masterConfirm" type="password" autocomplete="new-password" />
+        </label>
+        <p id="masterError" class="form-error" role="alert"></p>
+        <button id="masterSubmit" class="primary" type="submit">Desbloquear</button>
+      </form>
+      <small>Por segurança, a senha mestra não é armazenada no Firebase e não pode ser recuperada.</small>
+    </div>
+  </section>
 
   <div id="appView" class="workspace hidden">
-    <header class="app-header">
-      <div class="brand" title="Work Storage">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
         <div class="brand-mark small">WS</div>
-        <div class="brand-copy">
-          <strong>Work Storage</strong>
-          <span>notas sincronizadas</span>
-        </div>
+        <div><strong>Work Storage</strong><span>workspace pessoal</span></div>
       </div>
 
-      <label class="search-box">
-        <span aria-hidden="true">⌕</span>
-        <input id="searchInput" type="search" placeholder="Buscar nas notas..." autocomplete="off" />
-        <kbd>Ctrl K</kbd>
-      </label>
+      <button id="newItemBtn" class="primary new-item-button" type="button">＋ Novo item</button>
 
-      <div class="header-actions">
-        <div id="syncState" class="sync-state" title="Estado do salvamento">
-          <i></i><span>Local</span>
-        </div>
-        <button id="themeBtn" class="icon-btn" type="button" title="Alternar tema" aria-label="Alternar tema">◐</button>
-        <button id="menuBtn" class="avatar-btn" type="button" aria-haspopup="menu" aria-expanded="false">WS</button>
+      <nav class="main-nav" aria-label="Navegação principal">
+        <button class="nav-button active" data-filter="home"><span>⌂</span>Início</button>
+        <button class="nav-button" data-filter="all"><span>◇</span>Todos os itens</button>
+        <button class="nav-button" data-filter="pinned"><span>★</span>Fixados</button>
+      </nav>
+
+      <div class="sidebar-section-head">
+        <span>Pastas</span>
+        <button id="newFolderBtn" class="mini-button" type="button" title="Nova pasta" aria-label="Nova pasta">＋</button>
       </div>
-    </header>
+      <div id="folderNav" class="folder-nav"></div>
 
-    <div class="tabs-shell">
-      <button id="scrollTabsLeft" class="tab-scroll" type="button" aria-label="Rolar abas para a esquerda">‹</button>
-      <div id="tabs" class="tabs" role="tablist" aria-label="Abas de notas"></div>
-      <button id="newTabBtn" class="new-tab" type="button" title="Nova nota (Alt+N)">＋</button>
-      <button id="scrollTabsRight" class="tab-scroll" type="button" aria-label="Rolar abas para a direita">›</button>
+      <div class="sidebar-foot">
+        <span>Arraste as pastas para reorganizar</span>
+      </div>
+    </aside>
+
+    <div class="workspace-main">
+      <header class="topbar">
+        <label class="search-box">
+          <span aria-hidden="true">⌕</span>
+          <input id="searchInput" type="search" placeholder="Buscar em todo o workspace..." autocomplete="off" />
+          <kbd>Ctrl K</kbd>
+        </label>
+        <div class="topbar-actions">
+          <div id="syncState" class="sync-state"><i></i><span>Carregando...</span></div>
+          <button id="themeBtn" class="icon-button" type="button" title="Alternar tema" aria-label="Alternar tema">◐</button>
+          <button id="menuBtn" class="avatar-button" type="button" aria-haspopup="menu" aria-expanded="false">WS</button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <section id="homeView">
+          <div class="hero-row">
+            <div>
+              <span class="eyebrow">Seu workspace</span>
+              <h1>O que você precisa agora?</h1>
+              <p>Crie, encontre e conecte suas informações sem separar tudo em aplicativos diferentes.</p>
+            </div>
+            <button id="quickNewBtn" class="primary" type="button">＋ Criar item</button>
+          </div>
+
+          <section class="home-section quick-actions">
+            <div class="section-heading"><div><span>Atalhos rápidos</span><h2>Comece do jeito certo</h2></div></div>
+            <div class="quick-grid">
+              <button data-template="note"><span>✎</span><strong>Nota</strong><small>Texto livre e ideias</small></button>
+              <button data-template="login"><span>◈</span><strong>Acesso</strong><small>Login, senha e site</small></button>
+              <button data-template="project"><span>▦</span><strong>Projeto</strong><small>Texto, tarefas e links</small></button>
+              <button data-template="prompt"><span>&lt;/&gt;</span><strong>Prompt</strong><small>Prompts e código</small></button>
+              <button data-template="file"><span>▧</span><strong>Arquivo</strong><small>Arquivo leve + contexto</small></button>
+              <button data-template="link"><span>↗</span><strong>Link</strong><small>Favorito com observações</small></button>
+            </div>
+          </section>
+
+          <section class="home-section">
+            <div class="section-heading"><div><span>Recentes</span><h2>Continue de onde parou</h2></div><button data-filter="all" class="text-link">Ver todos</button></div>
+            <div id="recentItems" class="item-grid cards compact"></div>
+          </section>
+
+          <section class="home-section split-home">
+            <div>
+              <div class="section-heading"><div><span>Fixados</span><h2>Importantes</h2></div></div>
+              <div id="pinnedItems" class="item-grid cards compact"></div>
+            </div>
+            <div>
+              <div class="section-heading"><div><span>Pastas</span><h2>Organização</h2></div><button data-new-folder class="text-link">Nova pasta</button></div>
+              <div id="homeFolders" class="folder-grid"></div>
+            </div>
+          </section>
+        </section>
+
+        <section id="libraryView" class="hidden">
+          <div class="library-head">
+            <div><span id="libraryCount" class="eyebrow">0 itens</span><h1 id="libraryTitle">Todos os itens</h1></div>
+            <div class="view-toggle" aria-label="Modo de visualização">
+              <button data-view="cards" type="button" title="Cards">▦</button>
+              <button data-view="list" type="button" title="Lista">☷</button>
+            </div>
+          </div>
+          <div id="itemGrid" class="item-grid cards"></div>
+        </section>
+      </main>
     </div>
 
-    <main class="editor-shell">
-      <section id="emptyState" class="empty-state hidden">
-        <div class="empty-icon">＋</div>
-        <h2>Crie sua primeira nota</h2>
-        <p>Cada nota vira uma aba. Tudo é salvo automaticamente enquanto você digita.</p>
-        <button id="emptyCreateBtn" class="primary" type="button">Criar nota</button>
-      </section>
+    <div id="createMenu" class="create-menu hidden">
+      <div class="create-menu-head"><strong>Novo item</strong><span>Comece vazio ou use um modelo</span></div>
+      <button data-template="blank"><span>◇</span><div><strong>Item vazio</strong><small>Monte seus próprios blocos</small></div><kbd>Alt N</kbd></button>
+      <button data-template="note"><span>✎</span><div><strong>Nota</strong><small>Texto livre</small></div></button>
+      <button data-template="login"><span>◈</span><div><strong>Acesso</strong><small>Login, senha e observações</small></div></button>
+      <button data-template="project"><span>▦</span><div><strong>Projeto</strong><small>Contexto, checklist e links</small></div></button>
+      <button data-template="prompt"><span>&lt;/&gt;</span><div><strong>Prompt / código</strong><small>Conteúdo técnico ou IA</small></div></button>
+      <button data-template="checklist"><span>✓</span><div><strong>Checklist</strong><small>Lista de tarefas</small></div></button>
+      <button data-template="file"><span>▧</span><div><strong>Arquivo</strong><small>Arquivo ou imagem com contexto</small></div></button>
+      <button data-template="link"><span>↗</span><div><strong>Link</strong><small>Favorito com notas</small></div></button>
+    </div>
 
-      <section id="editorView" class="editor-view hidden">
-        <div class="editor-topline">
-          <input id="noteTitle" class="note-title" maxlength="120" placeholder="Sem título" aria-label="Título da nota" />
-          <div class="editor-actions">
-            <button id="pinBtn" class="text-btn" type="button" title="Fixar nota">☆ Fixar</button>
-            <button id="duplicateBtn" class="text-btn" type="button" title="Duplicar nota">Duplicar</button>
-            <button id="deleteBtn" class="text-btn danger-text" type="button" title="Excluir nota">Excluir</button>
-          </div>
+    <div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
+    <aside id="itemDrawer" class="item-drawer hidden" aria-label="Editor do item">
+      <div class="drawer-topbar">
+        <button id="drawerClose" class="icon-button" type="button" aria-label="Fechar">←</button>
+        <div class="drawer-actions">
+          <button id="pinItemBtn" class="ghost" type="button">☆ Fixar</button>
+          <button id="maximizeBtn" class="icon-button" type="button" title="Maximizar">↗</button>
+          <button id="deleteItemBtn" class="ghost danger" type="button">Excluir</button>
         </div>
-
-        <div class="note-meta">
-          <span id="noteUpdated">Agora</span>
-          <span>•</span>
-          <span id="noteWords">0 palavras</span>
-          <span>•</span>
-          <span id="saveLabel">Salvo</span>
+      </div>
+      <div class="drawer-content">
+        <input id="itemTitle" class="item-title-input" maxlength="140" placeholder="Sem título" aria-label="Título do item" />
+        <div class="item-properties">
+          <label>Pasta<select id="itemFolder"></select></label>
+          <label>Tags<input id="itemTags" placeholder="trabalho, importante, estudos" /></label>
         </div>
-
-        <textarea id="noteContent" class="note-content" spellcheck="true" placeholder="Comece a escrever..."></textarea>
-      </section>
-    </main>
+        <div class="item-status"><span id="itemUpdated">Atualizado agora</span><span>•</span><span>Criptografado</span></div>
+        <div id="blocks" class="blocks"></div>
+        <div class="add-block-bar">
+          <select id="blockType">
+            <option value="text">Texto</option>
+            <option value="login">Login e senha</option>
+            <option value="link">Link</option>
+            <option value="file">Arquivo / imagem</option>
+            <option value="checklist">Checklist</option>
+            <option value="code">Código / prompt</option>
+            <option value="fields">Campos personalizados</option>
+          </select>
+          <button id="addBlockBtn" class="secondary" type="button">＋ Adicionar bloco</button>
+        </div>
+      </div>
+    </aside>
 
     <div id="accountMenu" class="account-menu hidden" role="menu">
-      <div class="menu-account">
-        <strong id="accountName">Work Storage</strong>
-        <span id="accountEmail">Modo local</span>
-      </div>
-      <button data-menu-action="new">Nova nota <kbd>Alt N</kbd></button>
-      <button data-menu-action="export">Exportar backup</button>
-      <button data-menu-action="import">Importar backup</button>
-      <button data-menu-action="theme">Alternar tema</button>
+      <div class="menu-account"><strong id="accountName">Work Storage</strong><span id="accountEmail"></span></div>
+      <button id="lockBtn" type="button">Bloquear workspace <span>⌁</span></button>
+      <button id="exportBtn" type="button">Exportar backup criptografado</button>
+      <button id="importBtn" type="button">Restaurar backup</button>
+      <button type="button" onclick="document.getElementById('themeBtn').click()">Alternar tema</button>
       <hr />
-      <button id="signOutBtn" data-menu-action="signout" class="hidden">Sair da conta</button>
-      <div id="firebaseHint" class="firebase-hint hidden">Firebase ainda não configurado. As notas estão sendo salvas somente neste navegador.</div>
+      <button id="signOutBtn" type="button">Sair da conta</button>
     </div>
 
     <input id="importInput" type="file" accept="application/json" class="hidden" />
-    <div id="toastRegion" class="toast-region" aria-live="polite"></div>
   </div>
+
+  <div id="toastRegion" class="toast-region" aria-live="polite"></div>
 
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="./firebase-config.js"></script>
-  <script src="./app.js"></script>
+  <script src="./workspace.js"></script>
   <script src="./auth-fix.js"></script>
-  <script src="./shortcuts.js"></script>
 </body>
 </html>
