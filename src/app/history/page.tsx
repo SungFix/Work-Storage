@@ -1,0 +1,2 @@
+import { AppShell } from '@/components/app-shell';
+export default function Page(){return <AppShell><div className="mx-auto max-w-7xl"><p className="text-sm text-[var(--muted)]">Work Storage</p><h1 className="mt-1 text-3xl font-semibold">Histórico</h1><div className="mt-6 rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-8"><p className="text-sm text-[var(--muted)]">Alterações recentes e versões poderão ser acompanhadas aqui.</p></div></div></AppShell>}
