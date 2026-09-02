@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#111214" />
+  <title>Work Storage</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div id="loginView" class="login-view hidden">
+    <div class="login-orb orb-a"></div><div class="login-orb orb-b"></div>
+    <section class="login-brand">
+      <div class="brand"><div class="brand-icon">▣</div><div><strong>Work Storage</strong><small>Seu cofre digital</small></div></div>
+      <div class="login-copy"><span class="pill">✦ organização silenciosa</span><h1>Tudo que importa.<br><em>Guardado no lugar certo.</em></h1><p>Prompts, credenciais, notas e arquivos em um espaço privado pensado para encontrar informação em segundos.</p></div>
+      <div class="login-meta"><span>Criptografado</span><span>Privado</span><span>Organizado</span></div>
+    </section>
+    <section class="login-form-wrap"><form id="loginForm" class="login-card"><span class="eyebrow">Área privada</span><h2>Entre no seu cofre</h2><p>Uma única conta. Nenhum cadastro público.</p><label>E-mail<input id="email" type="email" placeholder="seu@email.com" required></label><label>Senha<div class="password-wrap"><input id="password" type="password" placeholder="Sua senha" required><button type="button" id="togglePassword" class="icon-btn">◉</button></div></label><button class="primary wide" type="submit">Entrar →</button><small>🔒 Após o login, sua senha mestra desbloqueia dados sensíveis.</small></form></section>
+  </div>
+
+  <div id="appView" class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-icon">▣</div><div><strong>Work Storage</strong><small>private vault</small></div></div>
+      <nav id="nav">
+        <button data-view="dashboard" class="nav-item active">▦ <span>Visão geral</span></button>
+        <button data-view="vault" class="nav-item">▣ <span>Cofre</span></button>
+        <button data-view="prompts" class="nav-item">▤ <span>Prompts</span></button>
+        <button data-view="passwords" class="nav-item">⌕ <span>Senhas e logins</span></button>
+        <button data-view="notes" class="nav-item">▱ <span>Notas</span></button>
+        <button data-view="files" class="nav-item">♧ <span>Arquivos</span></button>
+        <button data-view="favorites" class="nav-item">♡ <span>Favoritos</span></button>
+        <button data-view="history" class="nav-item">◷ <span>Histórico</span></button>
+        <button data-view="trash" class="nav-item">♲ <span>Lixeira</span></button>
+        <button data-view="settings" class="nav-item">⚙ <span>Configurações</span></button>
+      </nav>
+      <div class="sidebar-bottom"><div class="status-dot"><i></i><div><strong>Cofre desbloqueado</strong><small>Sessão protegida</small></div></div><button id="lockBtn" class="ghost wide">Bloquear agora</button></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar"><button id="mobileMenu" class="icon-btn mobile-only">☰</button><div class="search"><span>⌕</span><input id="globalSearch" placeholder="Pesquisar em todo o cofre..."></div><button id="themeBtn" class="icon-btn">◐</button><div class="avatar">WS</div></header>
+      <section id="content"></section>
+    </main>
+    <button id="fab" class="fab">＋</button>
+  </div>
+
+  <dialog id="itemDialog"><form method="dialog" id="itemForm" class="modal"><div class="modal-head"><div><span class="eyebrow">Novo registro</span><h2>Adicionar ao cofre</h2></div><button value="cancel" class="icon-btn">×</button></div><label>Tipo<select id="itemType"><option value="prompt">Prompt</option><option value="password">Senha / Login</option><option value="note">Nota</option><option value="link">Link</option><option value="file">Arquivo</option></select></label><label>Título<input id="itemTitle" required placeholder="Ex.: Prompt de pesquisa"></label><label>Conteúdo<textarea id="itemContent" rows="7" placeholder="Cole ou escreva o conteúdo..."></textarea></label><label>Tags<input id="itemTags" placeholder="trabalho, ia, importante"></label><div class="modal-actions"><button value="cancel" class="ghost">Cancelar</button><button id="saveItem" value="default" class="primary">Salvar item</button></div></form></dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
