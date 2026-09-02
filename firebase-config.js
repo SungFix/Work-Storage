@@ -1,7 +1,7 @@
 // Configuração Web pública do projeto Firebase Work-Storage.
 // A segurança dos dados depende do Firebase Authentication + regras do Firestore.
 window.WORK_STORAGE_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDIIfqJIAUfQrJmu4BX_e-idEMfRuyjE7k",
+  apiKey: "AIzaSyD1IfqJIAUfQrJmu4BX_e-idEMfRuyjE7k",
   authDomain: "work-storage-36c1c.firebaseapp.com",
   projectId: "work-storage-36c1c",
   storageBucket: "work-storage-36c1c.firebasestorage.app",
