@@ -22,3 +22,5 @@ Copie `.env.example` para `.env.local` quando conectar o Supabase.
 ## Publicação
 
 O projeto inclui um workflow para GitHub Pages. A versão publicada atualmente é uma demonstração visual; autenticação e dados reais serão conectados ao Supabase nas próximas etapas.
+
+> Deploy reativado após ajuste do workflow do GitHub Pages.
