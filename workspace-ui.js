@@ -1,27 +1,11 @@
-// Complementos leves da interface: menu móvel, tags e busca sem conteúdo base64.
+// Camada visual complementar: mobile, tags, métricas e contexto da navegação.
 (function(){
   const sidebar=document.querySelector('.sidebar');
   const topbar=document.querySelector('.topbar');
   const folderNav=document.getElementById('folderNav');
   if(!sidebar||!topbar||!folderNav)return;
 
-  const style=document.createElement('style');
-  style.textContent=`
-    .mobile-nav-button{display:none}
-    .mobile-nav-backdrop{display:none}
-    .tag-nav{display:grid;gap:2px;max-height:160px;overflow:auto}
-    .tag-nav button{display:grid;grid-template-columns:16px 1fr auto;align-items:center;gap:8px;width:100%;height:33px;padding:0 10px;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:10px;text-align:left}
-    .tag-nav button:hover{background:var(--panel);color:var(--soft)}
-    .tag-nav button.active{background:var(--panel-2);color:var(--text);font-weight:650}
-    .tag-nav button span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .tag-nav small{color:var(--muted);font-size:8px}
-    @media(max-width:800px){
-      .mobile-nav-button{display:inline-grid;place-items:center;flex:0 0 36px}
-      .mobile-nav-backdrop{position:fixed;inset:0;z-index:89;display:block;background:rgba(0,0,0,.48);backdrop-filter:blur(2px)}
-    }
-  `;
-  document.head.append(style);
-
+  // Busca textual sem varrer o conteúdo base64 de anexos.
   if(typeof searchable==='function'){
     searchable=function(item){
       const parts=[item.title,(item.tags||[]).join(' ')];
@@ -35,6 +19,7 @@
     };
   }
 
+  // Menu móvel.
   const mobileButton=document.createElement('button');
   mobileButton.id='mobileNavBtn';
   mobileButton.className='icon-button mobile-nav-button';
@@ -43,16 +28,6 @@
   mobileButton.setAttribute('aria-expanded','false');
   mobileButton.textContent='☰';
   topbar.prepend(mobileButton);
-
-  const tagHead=document.createElement('div');
-  tagHead.className='sidebar-section-head tag-section-head';
-  tagHead.innerHTML='<span>Tags</span>';
-  const tagNav=document.createElement('div');
-  tagNav.id='tagNav';
-  tagNav.className='tag-nav';
-  const foot=sidebar.querySelector('.sidebar-foot');
-  sidebar.insertBefore(tagHead,foot);
-  sidebar.insertBefore(tagNav,foot);
 
   const backdrop=document.createElement('div');
   backdrop.className='mobile-nav-backdrop hidden';
@@ -69,6 +44,17 @@
   sidebar.addEventListener('click',e=>{if(e.target.closest('[data-filter]')&&innerWidth<=800)setMobileNav(false)});
   window.addEventListener('resize',()=>{if(innerWidth>800)setMobileNav(false)});
 
+  // Tags dentro da sidebar.
+  const tagHead=document.createElement('div');
+  tagHead.className='sidebar-section-head tag-section-head';
+  tagHead.innerHTML='<span>Tags</span>';
+  const tagNav=document.createElement('div');
+  tagNav.id='tagNav';
+  tagNav.className='tag-nav';
+  const foot=sidebar.querySelector('.sidebar-foot');
+  sidebar.insertBefore(tagHead,foot);
+  sidebar.insertBefore(tagNav,foot);
+
   function renderTags(){
     if(typeof state==='undefined')return;
     const counts=new Map();
@@ -79,10 +65,45 @@
     tagNav.innerHTML=tags.map(([tag,count])=>`<button data-filter="tag:${esc(tag)}" class="${state.filter===`tag:${tag}`?'active':''}"><span>#</span><span>${esc(tag)}</span><small>${count}</small></button>`).join('');
   }
 
+  function updateOverview(){
+    if(typeof state==='undefined')return;
+    const items=document.getElementById('statItems');
+    const pinned=document.getElementById('statPinned');
+    const folders=document.getElementById('statFolders');
+    if(items)items.textContent=String(state.items.length);
+    if(pinned)pinned.textContent=String(state.items.filter(item=>item.pinned).length);
+    if(folders)folders.textContent=String(state.folders.length);
+  }
+
+  function updateContext(){
+    if(typeof state==='undefined')return;
+    const target=document.getElementById('topbarContext');
+    if(!target)return;
+    let label='Início';
+    if(state.search)label='Busca';
+    else if(state.filter==='all')label='Biblioteca';
+    else if(state.filter==='pinned')label='Fixados';
+    else if(state.filter.startsWith('folder:'))label=typeof folderName==='function'?folderName(state.filter.slice(7)):'Pasta';
+    else if(state.filter.startsWith('tag:'))label=`#${state.filter.slice(4)}`;
+    target.textContent=label;
+  }
+
   if(typeof renderSidebar==='function'){
     const baseRenderSidebar=renderSidebar;
     renderSidebar=function(){baseRenderSidebar();renderTags()};
   }
 
+  if(typeof renderHome==='function'){
+    const baseRenderHome=renderHome;
+    renderHome=function(){baseRenderHome();updateOverview()};
+  }
+
+  if(typeof renderMain==='function'){
+    const baseRenderMain=renderMain;
+    renderMain=function(){baseRenderMain();updateContext();updateOverview()};
+  }
+
   renderTags();
+  updateOverview();
+  updateContext();
 })();
