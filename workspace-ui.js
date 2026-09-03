@@ -1,4 +1,4 @@
-// Complementos de navegação responsiva, tags e robustez da migração.
+// Complementos leves da interface: menu móvel, tags e busca sem conteúdo base64.
 (function(){
   const sidebar=document.querySelector('.sidebar');
   const topbar=document.querySelector('.topbar');
@@ -7,17 +7,21 @@
 
   const style=document.createElement('style');
   style.textContent=`
-    .mobile-nav-button{display:none}.mobile-nav-backdrop{display:none}
-    .tag-nav{display:grid;gap:2px;max-height:170px;overflow:auto}
-    .tag-nav button{height:32px;border:0;background:transparent;color:var(--muted);border-radius:8px;display:grid;grid-template-columns:16px 1fr auto;gap:7px;align-items:center;text-align:left;padding:0 10px;font-size:11px}
-    .tag-nav button:hover,.tag-nav button.active{background:var(--panel-2);color:var(--text)}
-    .tag-nav button span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tag-nav small{font-size:8px;color:var(--muted)}
-    .lock-secondary{margin-top:12px;background:transparent;border:0;color:var(--muted);font-size:11px;padding:8px 10px;border-radius:8px}.lock-secondary:hover{color:var(--text);background:var(--panel-2)}
-    @media(max-width:800px){.mobile-nav-button{display:inline-grid;place-items:center;flex:0 0 36px}.sidebar.open{transform:translateX(0)}.mobile-nav-backdrop{display:block;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:89}}
+    .mobile-nav-button{display:none}
+    .mobile-nav-backdrop{display:none}
+    .tag-nav{display:grid;gap:2px;max-height:160px;overflow:auto}
+    .tag-nav button{display:grid;grid-template-columns:16px 1fr auto;align-items:center;gap:8px;width:100%;height:33px;padding:0 10px;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:10px;text-align:left}
+    .tag-nav button:hover{background:var(--panel);color:var(--soft)}
+    .tag-nav button.active{background:var(--panel-2);color:var(--text);font-weight:650}
+    .tag-nav button span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .tag-nav small{color:var(--muted);font-size:8px}
+    @media(max-width:800px){
+      .mobile-nav-button{display:inline-grid;place-items:center;flex:0 0 36px}
+      .mobile-nav-backdrop{position:fixed;inset:0;z-index:89;display:block;background:rgba(0,0,0,.48);backdrop-filter:blur(2px)}
+    }
   `;
   document.head.append(style);
 
-  // Evita pesquisar dentro do conteúdo base64 de anexos.
   if(typeof searchable==='function'){
     searchable=function(item){
       const parts=[item.title,(item.tags||[]).join(' ')];
@@ -29,12 +33,6 @@
       });
       return parts.join(' ').toLowerCase();
     };
-  }
-
-  // Se uma migração tiver sido interrompida, tenta concluir após qualquer desbloqueio.
-  if(typeof openWorkspace==='function'&&typeof migrateLegacyContent==='function'){
-    const baseOpenWorkspace=openWorkspace;
-    openWorkspace=async function(){await migrateLegacyContent();return baseOpenWorkspace()};
   }
 
   const mobileButton=document.createElement('button');
@@ -61,7 +59,11 @@
   backdrop.id='mobileNavBackdrop';
   document.body.append(backdrop);
 
-  function setMobileNav(open){sidebar.classList.toggle('open',open);backdrop.classList.toggle('hidden',!open);mobileButton.setAttribute('aria-expanded',String(open))}
+  function setMobileNav(open){
+    sidebar.classList.toggle('open',open);
+    backdrop.classList.toggle('hidden',!open);
+    mobileButton.setAttribute('aria-expanded',String(open));
+  }
   mobileButton.addEventListener('click',()=>setMobileNav(!sidebar.classList.contains('open')));
   backdrop.addEventListener('click',()=>setMobileNav(false));
   sidebar.addEventListener('click',e=>{if(e.target.closest('[data-filter]')&&innerWidth<=800)setMobileNav(false)});
@@ -80,17 +82,6 @@
   if(typeof renderSidebar==='function'){
     const baseRenderSidebar=renderSidebar;
     renderSidebar=function(){baseRenderSidebar();renderTags()};
-  }
-
-  // Permite sair da conta mesmo se a senha mestra for esquecida.
-  const lockShell=document.querySelector('#lockView .gate-shell');
-  if(lockShell){
-    const signOut=document.createElement('button');
-    signOut.className='lock-secondary';
-    signOut.type='button';
-    signOut.textContent='Sair desta conta';
-    signOut.addEventListener('click',()=>{if(typeof auth!=='undefined'&&auth)auth.signOut()});
-    lockShell.append(signOut);
   }
 
   renderTags();
