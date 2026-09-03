@@ -23,6 +23,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Validate JavaScript
+        run: |
+          node --check workspace.js
+          node --check workspace-ui.js
+          node --check auth-fix.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Prepare static site
