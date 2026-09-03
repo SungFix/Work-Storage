@@ -5,11 +5,23 @@
   const folderNav=document.getElementById('folderNav');
   if(!sidebar||!topbar||!folderNav)return;
 
+  const style=document.createElement('style');
+  style.textContent=`
+    .mobile-nav-button{display:none}.mobile-nav-backdrop{display:none}
+    .tag-nav{display:grid;gap:2px;max-height:170px;overflow:auto}
+    .tag-nav button{height:32px;border:0;background:transparent;color:var(--muted);border-radius:8px;display:grid;grid-template-columns:16px 1fr auto;gap:7px;align-items:center;text-align:left;padding:0 10px;font-size:11px}
+    .tag-nav button:hover,.tag-nav button.active{background:var(--panel-2);color:var(--text)}
+    .tag-nav button span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tag-nav small{font-size:8px;color:var(--muted)}
+    @media(max-width:800px){.mobile-nav-button{display:inline-grid;place-items:center;flex:0 0 36px}.sidebar.open{transform:translateX(0)}.mobile-nav-backdrop{display:block;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:89}}
+  `;
+  document.head.append(style);
+
   const mobileButton=document.createElement('button');
   mobileButton.id='mobileNavBtn';
   mobileButton.className='icon-button mobile-nav-button';
   mobileButton.type='button';
   mobileButton.setAttribute('aria-label','Abrir navegação');
+  mobileButton.setAttribute('aria-expanded','false');
   mobileButton.textContent='☰';
   topbar.prepend(mobileButton);
 
@@ -32,6 +44,7 @@
   mobileButton.addEventListener('click',()=>setMobileNav(!sidebar.classList.contains('open')));
   backdrop.addEventListener('click',()=>setMobileNav(false));
   sidebar.addEventListener('click',e=>{if(e.target.closest('[data-filter]')&&innerWidth<=800)setMobileNav(false)});
+  window.addEventListener('resize',()=>{if(innerWidth>800)setMobileNav(false)});
 
   function renderTags(){
     if(typeof state==='undefined')return;
