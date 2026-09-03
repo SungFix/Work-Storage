@@ -1,110 +1,146 @@
-// Ferramentas de segurança para trocar a senha mestra enquanto o workspace está desbloqueado.
+// Work Storage sem senha mestra.
+// Mantém o workspace atual, mas salva os registros diretamente no Firestore da conta autenticada.
 (function(){
-  if(window.__wsMasterToolsLoaded){
-    if(document.currentScript?.src?.includes('recover=1')&&window.WSOpenMasterPasswordDialog)window.WSOpenMasterPasswordDialog();
-    return;
-  }
-  window.__wsMasterToolsLoaded=true;
+  const PLAIN_VERSION=3;
 
-  const canUse=()=>typeof state!=='undefined'&&state&&state.key&&state.user&&typeof db!=='undefined'&&db&&typeof userCollection==='function';
-
-  const style=document.createElement('style');
-  style.textContent=`
-    .master-tools-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:180;display:grid;place-items:center;padding:18px;backdrop-filter:blur(5px)}
-    .master-tools-dialog{width:min(460px,100%);background:var(--panel,var(--surface,#17191c));border:1px solid var(--line,#2b3036);border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.38);padding:22px;color:var(--text,#fff)}
-    .master-tools-dialog h2{margin:0 0 7px;font-size:21px}.master-tools-dialog>p{margin:0 0 18px;color:var(--muted,#9098a1);font-size:12px;line-height:1.55}
-    .master-tools-dialog label{display:grid;gap:6px;margin:11px 0;font-size:11px;color:var(--muted,#9098a1)}
-    .master-tools-dialog input{width:100%;height:42px;border:1px solid var(--line,#2b3036);border-radius:9px;background:var(--panel-2,var(--surface-2,#1d2024));color:var(--text,#fff);padding:0 11px;outline:none}
-    .master-tools-dialog input:focus{border-color:var(--text,#fff)}
-    .master-tools-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:17px}.master-tools-error{min-height:16px;color:#ff8585;font-size:11px;margin:8px 0 0}
-    .master-tools-warning{padding:10px 11px;border:1px solid var(--line,#2b3036);border-radius:9px;background:var(--panel-2,var(--surface-2,#1d2024));font-size:10px;line-height:1.5;color:var(--muted,#9098a1)}
-  `;
-  document.head.append(style);
-
-  const backdrop=document.createElement('div');
-  backdrop.className='master-tools-backdrop hidden';
-  backdrop.id='masterToolsBackdrop';
-  backdrop.innerHTML=`<div class="master-tools-dialog" role="dialog" aria-modal="true" aria-labelledby="masterToolsTitle">
-    <h2 id="masterToolsTitle">Trocar senha mestra</h2>
-    <p>Como este dispositivo já está desbloqueado, não é necessário informar a senha antiga. Todos os itens serão recriptografados com a nova senha antes da troca ser concluída.</p>
-    <div class="master-tools-warning">Não feche nem recarregue esta aba durante a troca. Depois de concluir, a senha anterior deixa de funcionar.</div>
-    <form id="masterToolsForm">
-      <label>Nova senha mestra<input id="masterToolsPassword" type="password" autocomplete="new-password" minlength="10" required></label>
-      <label>Confirmar nova senha<input id="masterToolsConfirm" type="password" autocomplete="new-password" minlength="10" required></label>
-      <div id="masterToolsError" class="master-tools-error" role="alert"></div>
-      <div class="master-tools-actions"><button id="masterToolsCancel" type="button" class="ghost">Cancelar</button><button id="masterToolsSubmit" type="submit" class="primary">Trocar senha</button></div>
-    </form>
-  </div>`;
-  document.body.append(backdrop);
-
-  const openDialog=()=>{
-    const error=document.getElementById('masterToolsError');
-    if(error)error.textContent='';
-    document.getElementById('masterToolsForm')?.reset();
-    backdrop.classList.remove('hidden');
-    setTimeout(()=>document.getElementById('masterToolsPassword')?.focus(),30);
+  const decodePlain=doc=>{
+    const raw=doc.data();
+    if(raw&&raw.version===PLAIN_VERSION&&raw.plain===true&&raw.value&&typeof raw.value==='object'){
+      return{kind:raw.kind,value:{...raw.value,id:doc.id}};
+    }
+    if(raw&&!raw.kind&&!raw.iv&&!raw.data&&(raw.title!==undefined||raw.content!==undefined)){
+      return{kind:'legacy-note',value:{id:doc.id,title:raw.title||'Sem título',content:raw.content||'',pinned:Boolean(raw.pinned),createdAt:Number(raw.createdAt)||now(),updatedAt:Number(raw.updatedAt)||now()}};
+    }
+    if(raw&&(raw.iv&&raw.data||raw.kind==='security'))return{kind:'encrypted'};
+    return null;
   };
-  const closeDialog=()=>backdrop.classList.add('hidden');
-  window.WSOpenMasterPasswordDialog=openDialog;
 
-  const accountMenu=document.getElementById('accountMenu');
-  const lockBtn=document.getElementById('lockBtn');
-  if(accountMenu&&!document.getElementById('changeMasterPasswordBtn')){
-    const button=document.createElement('button');
-    button.id='changeMasterPasswordBtn';button.type='button';button.textContent='Trocar senha mestra';
-    button.addEventListener('click',()=>{accountMenu.classList.add('hidden');openDialog()});
-    lockBtn?.insertAdjacentElement('afterend',button);
-  }
+  const showMigrationWarning=()=>{
+    if(document.getElementById('wsMigrationWarning'))return;
+    const el=document.createElement('div');
+    el.id='wsMigrationWarning';
+    el.style.cssText='position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:170;width:min(720px,calc(100% - 28px));padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:var(--panel);box-shadow:var(--shadow);display:grid;gap:4px';
+    el.innerHTML='<strong>Falta concluir a migração da versão com senha mestra.</strong><span style="color:var(--muted);font-size:11px;line-height:1.5">Não edite nada nesta aba. Use a aba antiga que ainda estava desbloqueada para remover a senha sem perder os dados.</span>';
+    document.body.append(el);
+  };
 
-  document.getElementById('masterToolsCancel').addEventListener('click',closeDialog);
-  backdrop.addEventListener('click',e=>{if(e.target===backdrop)closeDialog()});
+  setScreen=function(name){
+    $('#authView')?.classList.toggle('hidden',name!=='auth');
+    $('#appView')?.classList.toggle('hidden',name==='auth');
+  };
 
-  document.getElementById('masterToolsForm').addEventListener('submit',async e=>{
-    e.preventDefault();
-    const password=document.getElementById('masterToolsPassword').value;
-    const confirmPassword=document.getElementById('masterToolsConfirm').value;
-    const error=document.getElementById('masterToolsError');
-    const submit=document.getElementById('masterToolsSubmit');
-    error.textContent='';
-    if(!canUse()){error.textContent='O workspace precisa continuar desbloqueado nesta aba.';return}
-    if(password.length<10){error.textContent='Use pelo menos 10 caracteres.';return}
-    if(password!==confirmPassword){error.textContent='As duas senhas não são iguais.';return}
+  prepareSecurity=async function(){
+    state.key=true;
+    await openWorkspace();
+  };
 
-    submit.disabled=true;submit.textContent='Recriptografando...';
-    const oldKey=state.key;
-    const oldSecurity=state.security;
-    try{
-      clearTimeout(typeof saveTimer!=='undefined'?saveTimer:null);
-      clearTimeout(typeof idleTimer!=='undefined'?idleTimer:null);
-      const records=[...state.items.map(value=>({kind:'item',value})),...state.folders.map(value=>({kind:'folder',value}))];
-      if(records.length>450)throw new Error('Há itens demais para uma troca atômica segura. Não fiz nenhuma alteração.');
+  openWorkspace=async function(){
+    state.key=true;
+    setScreen('app');updateAccount();setSync('saving','Carregando...');
+    await loadWorkspace();subscribeWorkspace();renderAll();
+    if(state.hasEncryptedLegacy){setSync('error','Migração necessária');showMigrationWarning()}
+    else setSync('cloud','Sincronizado');
+  };
 
-      const snap=await userCollection().get();
-      const cloudCount=snap.docs.filter(d=>['item','folder'].includes(d.data().kind)).length;
-      if(cloudCount!==records.length)throw new Error('A sincronização ainda não terminou. Aguarde alguns segundos e tente novamente.');
-
-      const salt=crypto.getRandomValues(new Uint8Array(16));
-      const newKey=await deriveKey(password,salt,PBKDF2_ITERATIONS);
-      const verifier=await encryptValue({check:'work-storage-v2'},newKey);
-      const security={kind:'security',version:2,salt:bytesToB64(salt),iterations:PBKDF2_ITERATIONS,iv:verifier.iv,data:verifier.data,createdAt:oldSecurity?.createdAt||now(),rotatedAt:now()};
-      const batch=db.batch();
-      for(const record of records){
-        const enc=await encryptValue(record.value,newKey);
-        batch.set(userCollection().doc(record.value.id),{kind:record.kind,version:2,iv:enc.iv,data:enc.data,updatedAt:record.value.updatedAt||now()});
+  loadWorkspace=async function(){
+    const snap=await userCollection().get();
+    state.items=[];state.folders=[];state.hasEncryptedLegacy=false;
+    const legacy=[];
+    for(const d of snap.docs){
+      const decoded=decodePlain(d);if(!decoded)continue;
+      if(decoded.kind==='item')state.items.push(decoded.value);
+      else if(decoded.kind==='folder')state.folders.push(decoded.value);
+      else if(decoded.kind==='legacy-note')legacy.push(decoded.value);
+      else if(decoded.kind==='encrypted')state.hasEncryptedLegacy=true;
+    }
+    if(legacy.length&&!state.hasEncryptedLegacy){
+      for(const n of legacy){
+        const item={id:n.id,title:n.title,folderId:null,tags:[],pinned:n.pinned,createdAt:n.createdAt,updatedAt:n.updatedAt,blocks:[{...blankBlock('text'),text:n.content}]};
+        state.items.push(item);
+        await saveRecord('item',item);
       }
-      batch.set(userCollection().doc(SECURITY_ID),security);
+    }
+    normalizeOrders();
+  };
 
+  subscribeWorkspace=function(){
+    if(unsubscribeCloud)unsubscribeCloud();
+    unsubscribeCloud=userCollection().onSnapshot(snap=>{
+      if(state.syncing)return;
+      const items=[],folders=[];let encrypted=false;
+      for(const d of snap.docs){
+        const decoded=decodePlain(d);if(!decoded)continue;
+        if(decoded.kind==='item')items.push(decoded.value);
+        else if(decoded.kind==='folder')folders.push(decoded.value);
+        else if(decoded.kind==='encrypted')encrypted=true;
+      }
+      state.items=items;state.folders=folders;state.hasEncryptedLegacy=encrypted;normalizeOrders();
+      if(state.activeId&&!state.items.some(i=>i.id===state.activeId))closeDrawer();
+      renderAll();
+      if(encrypted){setSync('error','Migração necessária');showMigrationWarning()}
+      else setSync('cloud','Sincronizado');
+    },err=>{console.error(err);setSync('error','Erro de sincronização')});
+  };
+
+  clearWorkspaceMemory=function(){
+    if(unsubscribeCloud){unsubscribeCloud();unsubscribeCloud=null}
+    clearTimeout(saveTimer);clearTimeout(idleTimer);
+    state.key=null;state.security=null;state.items=[];state.folders=[];state.activeId=null;state.hasEncryptedLegacy=false;
+  };
+
+  lockWorkspace=function(){};
+  resetIdleTimer=function(){};
+
+  saveRecord=async function(kind,obj){
+    if(!state.user)return;
+    if(state.hasEncryptedLegacy){toast('Conclua a migração da versão antiga antes de editar.','error');return}
+    const raw=JSON.stringify(obj);
+    if(kind==='item'&&textEncoder.encode(raw).length>MAX_ITEM_BYTES){toast('Este item ficou grande demais para sincronizar. Remova arquivos ou divida o conteúdo.','error');throw new Error('item-too-large')}
+    state.syncing=true;setSync('saving','Salvando...');
+    try{
+      await userCollection().doc(obj.id).set({kind,version:PLAIN_VERSION,plain:true,value:obj,updatedAt:obj.updatedAt||now()});
+      setSync('cloud','Sincronizado');
+    }finally{state.syncing=false}
+  };
+
+  queueSave=function(item=activeItem()){
+    clearTimeout(saveTimer);if(!item)return;
+    setSync('saving','Salvando...');
+    saveTimer=setTimeout(()=>saveRecord('item',item).catch(console.error),500);
+  };
+
+  exportBackup=async function(){
+    const backup={product:'Work Storage',version:PLAIN_VERSION,encrypted:false,exportedAt:new Date().toISOString(),items:state.items,folders:state.folders};
+    const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download=`work-storage-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(url);toast('Backup exportado.');
+  };
+
+  importBackup=async function(file){
+    try{
+      const backup=JSON.parse(await file.text());
+      if(backup.version!==PLAIN_VERSION||backup.encrypted!==false||!Array.isArray(backup.items)||!Array.isArray(backup.folders))throw new Error('Formato incompatível');
+      if(!confirm('Restaurar este backup? Os dados atuais na nuvem serão substituídos.'))return;
       state.syncing=true;
-      await batch.commit();
-      state.key=newKey;state.security=security;state.syncing=false;
-      await loadWorkspace();renderAll();setSync('cloud','Protegido e sincronizado');resetIdleTimer();
-      closeDialog();toast('Senha mestra trocada com sucesso.');
-      alert('Senha mestra alterada com sucesso. Anote a nova senha antes de recarregar a página.');
-    }catch(err){
-      console.error(err);state.key=oldKey;state.security=oldSecurity;state.syncing=false;resetIdleTimer();
-      error.textContent=err.message||'Não foi possível trocar a senha. Nenhuma alteração foi confirmada.';
-    }finally{submit.disabled=false;submit.textContent='Trocar senha'}
-  });
+      const col=userCollection(),current=await col.get();
+      for(let i=0;i<current.docs.length;i+=400){const batch=db.batch();current.docs.slice(i,i+400).forEach(d=>batch.delete(d.ref));await batch.commit()}
+      const records=[...backup.items.map(value=>({kind:'item',value})),...backup.folders.map(value=>({kind:'folder',value}))];
+      for(let i=0;i<records.length;i+=400){
+        const batch=db.batch();
+        for(const r of records.slice(i,i+400))batch.set(col.doc(String(r.value.id)),{kind:r.kind,version:PLAIN_VERSION,plain:true,value:r.value,updatedAt:r.value.updatedAt||now()});
+        await batch.commit();
+      }
+      state.syncing=false;state.hasEncryptedLegacy=false;document.getElementById('wsMigrationWarning')?.remove();
+      await loadWorkspace();renderAll();toast('Backup restaurado.');
+    }catch(err){console.error(err);state.syncing=false;toast('Backup inválido ou incompatível.','error')}
+  };
 
-  if(document.currentScript?.src?.includes('recover=1'))setTimeout(openDialog,0);
+  const lockView=document.getElementById('lockView');if(lockView)lockView.remove();
+  const lockBtn=document.getElementById('lockBtn');if(lockBtn)lockBtn.remove();
+  const authSmall=document.querySelector('#authView small');if(authSmall)authSmall.textContent='Seus dados ficam vinculados à sua conta Google e às regras de acesso do Firebase.';
+  const status=$('.item-status span:last-child');if(status)status.textContent='Sincronizado com Firebase';
+  const exportBtn=$('#exportBtn');if(exportBtn){exportBtn.textContent='Exportar backup';exportBtn.onclick=exportBackup}
+  const originalRenderBlock=renderBlock;
+  renderBlock=function(block){return originalRenderBlock(block).replace('protegido dentro deste item','salvo neste item')};
+
+  state.hasEncryptedLegacy=false;
 })();
