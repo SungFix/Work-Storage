@@ -1,4 +1,4 @@
-// Complementos de navegação responsiva e exploração por tags.
+// Complementos de navegação responsiva, tags e robustez da migração.
 (function(){
   const sidebar=document.querySelector('.sidebar');
   const topbar=document.querySelector('.topbar');
@@ -12,9 +12,30 @@
     .tag-nav button{height:32px;border:0;background:transparent;color:var(--muted);border-radius:8px;display:grid;grid-template-columns:16px 1fr auto;gap:7px;align-items:center;text-align:left;padding:0 10px;font-size:11px}
     .tag-nav button:hover,.tag-nav button.active{background:var(--panel-2);color:var(--text)}
     .tag-nav button span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tag-nav small{font-size:8px;color:var(--muted)}
+    .lock-secondary{margin-top:12px;background:transparent;border:0;color:var(--muted);font-size:11px;padding:8px 10px;border-radius:8px}.lock-secondary:hover{color:var(--text);background:var(--panel-2)}
     @media(max-width:800px){.mobile-nav-button{display:inline-grid;place-items:center;flex:0 0 36px}.sidebar.open{transform:translateX(0)}.mobile-nav-backdrop{display:block;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:89}}
   `;
   document.head.append(style);
+
+  // Evita pesquisar dentro do conteúdo base64 de anexos.
+  if(typeof searchable==='function'){
+    searchable=function(item){
+      const parts=[item.title,(item.tags||[]).join(' ')];
+      (item.blocks||[]).forEach(block=>{
+        if(block.type==='file'){parts.push(block.name||'',block.mime||'');return}
+        if(block.type==='checklist'){parts.push(...(block.items||[]).map(x=>x.text||''));return}
+        if(block.type==='fields'){parts.push(...(block.rows||[]).flatMap(x=>[x.key||'',x.value||'']));return}
+        ['text','username','url','label','language','code'].forEach(key=>parts.push(block[key]||''));
+      });
+      return parts.join(' ').toLowerCase();
+    };
+  }
+
+  // Se uma migração tiver sido interrompida, tenta concluir após qualquer desbloqueio.
+  if(typeof openWorkspace==='function'&&typeof migrateLegacyContent==='function'){
+    const baseOpenWorkspace=openWorkspace;
+    openWorkspace=async function(){await migrateLegacyContent();return baseOpenWorkspace()};
+  }
 
   const mobileButton=document.createElement('button');
   mobileButton.id='mobileNavBtn';
@@ -60,5 +81,17 @@
     const baseRenderSidebar=renderSidebar;
     renderSidebar=function(){baseRenderSidebar();renderTags()};
   }
+
+  // Permite sair da conta mesmo se a senha mestra for esquecida.
+  const lockShell=document.querySelector('#lockView .gate-shell');
+  if(lockShell){
+    const signOut=document.createElement('button');
+    signOut.className='lock-secondary';
+    signOut.type='button';
+    signOut.textContent='Sair desta conta';
+    signOut.addEventListener('click',()=>{if(typeof auth!=='undefined'&&auth)auth.signOut()});
+    lockShell.append(signOut);
+  }
+
   renderTags();
 })();
