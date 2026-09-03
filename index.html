@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0d0f11" />
+  <meta name="theme-color" content="#0b0c0e" />
   <meta name="color-scheme" content="dark light" />
   <title>Work Storage</title>
   <link rel="stylesheet" href="./styles.css" />
@@ -11,10 +11,12 @@
 <body>
   <section id="authView" class="gate-view hidden">
     <div class="gate-shell">
-      <div class="brand-mark gate-logo">WS</div>
-      <span class="eyebrow">Work Storage</span>
-      <h1>Seu espaço pessoal,<br>sem bagunça.</h1>
-      <p>Reúna notas, acessos, links, arquivos, prompts e tarefas em um workspace pessoal que acompanha você em qualquer computador.</p>
+      <div class="auth-brand"><div class="brand-mark">WS</div><span>Work Storage</span></div>
+      <div class="auth-copy">
+        <span class="eyebrow">Workspace pessoal</span>
+        <h1>Guarde o que importa.<br>Encontre sem esforço.</h1>
+        <p>Notas, acessos, links, arquivos, prompts e tarefas em um único espaço privado, organizado e sincronizado.</p>
+      </div>
       <button id="googleSignIn" class="primary gate-button" type="button">Entrar com Google</button>
       <small>Seus dados ficam vinculados à sua conta Google e sincronizados pelo Firebase.</small>
     </div>
@@ -24,22 +26,30 @@
     <aside class="sidebar">
       <div class="sidebar-brand">
         <div class="brand-mark small">WS</div>
-        <div><strong>Work Storage</strong><span>arquivo pessoal</span></div>
+        <div><strong>Work Storage</strong><span>seu arquivo pessoal</span></div>
       </div>
-      <button id="newItemBtn" class="primary new-item-button" type="button">＋ Novo item</button>
+
+      <button id="newItemBtn" class="primary new-item-button" type="button"><span>＋</span> Novo item</button>
+
       <nav class="main-nav" aria-label="Navegação principal">
-        <button class="nav-button active" data-filter="home"><span>⌂</span>Início</button>
-        <button class="nav-button" data-filter="all"><span>◇</span>Todos os itens</button>
-        <button class="nav-button" data-filter="pinned"><span>★</span>Fixados</button>
+        <button class="nav-button active" data-filter="home"><span>⌂</span><b>Início</b></button>
+        <button class="nav-button" data-filter="all"><span>◇</span><b>Todos os itens</b></button>
+        <button class="nav-button" data-filter="pinned"><span>★</span><b>Fixados</b></button>
       </nav>
+
+      <div class="sidebar-divider"></div>
       <div class="sidebar-section-head"><span>Pastas</span><button id="newFolderBtn" class="mini-button" type="button" title="Nova pasta" aria-label="Nova pasta">＋</button></div>
       <div id="folderNav" class="folder-nav"></div>
-      <div class="sidebar-foot"><span>Arraste as pastas para reorganizar</span></div>
+
+      <div class="sidebar-foot">
+        <span>Arraste as pastas para reorganizar</span>
+      </div>
     </aside>
 
     <div class="workspace-main">
       <header class="topbar">
-        <label class="search-box"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Buscar itens, tags, links..." autocomplete="off" /><kbd>Ctrl K</kbd></label>
+        <div class="topbar-title"><span>WS</span><strong id="topbarContext">Início</strong></div>
+        <label class="search-box"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Buscar no workspace" autocomplete="off" /><kbd>Ctrl K</kbd></label>
         <div class="topbar-actions">
           <div id="syncState" class="sync-state"><i></i><span>Carregando...</span></div>
           <button id="themeBtn" class="icon-button" type="button" title="Alternar tema" aria-label="Alternar tema">◐</button>
@@ -49,42 +59,52 @@
 
       <main class="content-area">
         <section id="homeView">
-          <div class="hero-row">
-            <div>
+          <div class="home-intro">
+            <div class="home-intro-copy">
               <span class="eyebrow">Visão geral</span>
-              <h1>Tudo importante, no lugar certo.</h1>
-              <p>Acesse o que usou recentemente, mantenha o essencial fixado e crie novos conteúdos sem sair do mesmo espaço.</p>
+              <h1>Seu trabalho, sem ruído.</h1>
+              <p>Continue o que estava fazendo, recupere o essencial e crie novos itens sem trocar de contexto.</p>
             </div>
-            <button id="quickNewBtn" class="primary" type="button">＋ Novo item</button>
+            <div class="overview-metrics" aria-label="Resumo do workspace">
+              <div><strong id="statItems">0</strong><span>itens</span></div>
+              <div><strong id="statPinned">0</strong><span>fixados</span></div>
+              <div><strong id="statFolders">0</strong><span>pastas</span></div>
+            </div>
           </div>
 
-          <section class="home-section quick-actions">
-            <div class="section-heading"><div><span>Criar rápido</span><h2>Novo conteúdo</h2></div></div>
+          <section class="quick-dock" aria-label="Criar rapidamente">
+            <div class="quick-dock-label"><span>Criar</span><small>comece por um modelo</small></div>
             <div class="quick-grid">
-              <button data-template="note"><span>✎</span><strong>Nota</strong><small>Texto livre e ideias</small></button>
-              <button data-template="login"><span>◈</span><strong>Acesso</strong><small>Login, senha e site</small></button>
-              <button data-template="project"><span>▦</span><strong>Projeto</strong><small>Texto, tarefas e links</small></button>
-              <button data-template="prompt"><span>&lt;/&gt;</span><strong>Prompt</strong><small>Prompts e código</small></button>
-              <button data-template="file"><span>▧</span><strong>Arquivo</strong><small>Arquivo leve + contexto</small></button>
-              <button data-template="link"><span>↗</span><strong>Link</strong><small>Favorito com observações</small></button>
+              <button data-template="note"><span>✎</span><div><strong>Nota</strong><small>ideias e texto</small></div></button>
+              <button data-template="login"><span>◈</span><div><strong>Acesso</strong><small>login e site</small></div></button>
+              <button data-template="project"><span>▦</span><div><strong>Projeto</strong><small>contexto e tarefas</small></div></button>
+              <button data-template="prompt"><span>&lt;/&gt;</span><div><strong>Prompt</strong><small>IA e código</small></div></button>
+              <button data-template="file"><span>▧</span><div><strong>Arquivo</strong><small>arquivo + notas</small></div></button>
+              <button data-template="link"><span>↗</span><div><strong>Link</strong><small>salvar referência</small></div></button>
             </div>
           </section>
 
-          <section class="home-section">
-            <div class="section-heading"><div><span>Recentes</span><h2>Últimos itens</h2></div><button data-filter="all" class="text-link">Ver todos</button></div>
-            <div id="recentItems" class="item-grid cards compact"></div>
-          </section>
+          <div class="home-workgrid">
+            <section class="home-primary-panel">
+              <div class="section-heading">
+                <div><span>Atividade</span><h2>Recentes</h2></div>
+                <button data-filter="all" class="text-link">Ver biblioteca →</button>
+              </div>
+              <div id="recentItems" class="item-grid home-recent"></div>
+            </section>
 
-          <section class="home-section split-home">
-            <div>
-              <div class="section-heading"><div><span>Fixados</span><h2>Prioridades</h2></div></div>
-              <div id="pinnedItems" class="item-grid cards compact"></div>
-            </div>
-            <div>
-              <div class="section-heading"><div><span>Pastas</span><h2>Organização</h2></div><button data-new-folder class="text-link">Nova pasta</button></div>
-              <div id="homeFolders" class="folder-grid"></div>
-            </div>
-          </section>
+            <aside class="home-rail">
+              <section class="rail-section">
+                <div class="section-heading compact-heading"><div><span>Importantes</span><h2>Fixados</h2></div></div>
+                <div id="pinnedItems" class="item-grid home-pinned"></div>
+              </section>
+
+              <section class="rail-section folders-rail">
+                <div class="section-heading compact-heading"><div><span>Organização</span><h2>Pastas</h2></div><button data-new-folder class="text-link">＋</button></div>
+                <div id="homeFolders" class="folder-grid"></div>
+              </section>
+            </aside>
+          </div>
         </section>
 
         <section id="libraryView" class="hidden">
@@ -98,7 +118,7 @@
     </div>
 
     <div id="createMenu" class="create-menu hidden">
-      <div class="create-menu-head"><strong>Novo item</strong><span>Comece vazio ou use um modelo</span></div>
+      <div class="create-menu-head"><strong>Novo item</strong><span>Comece vazio ou escolha um modelo</span></div>
       <button data-template="blank"><span>◇</span><div><strong>Item vazio</strong><small>Monte seus próprios blocos</small></div><kbd>Alt N</kbd></button>
       <button data-template="note"><span>✎</span><div><strong>Nota</strong><small>Texto livre</small></div></button>
       <button data-template="login"><span>◈</span><div><strong>Acesso</strong><small>Login, senha e observações</small></div></button>
@@ -111,7 +131,10 @@
 
     <div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
     <aside id="itemDrawer" class="item-drawer hidden" aria-label="Editor do item">
-      <div class="drawer-topbar"><button id="drawerClose" class="icon-button" type="button" aria-label="Fechar">←</button><div class="drawer-actions"><button id="pinItemBtn" class="ghost" type="button">☆ Fixar</button><button id="maximizeBtn" class="icon-button" type="button" title="Maximizar">↗</button><button id="deleteItemBtn" class="ghost danger" type="button">Excluir</button></div></div>
+      <div class="drawer-topbar">
+        <button id="drawerClose" class="icon-button" type="button" aria-label="Fechar">←</button>
+        <div class="drawer-actions"><button id="pinItemBtn" class="ghost" type="button">☆ Fixar</button><button id="maximizeBtn" class="icon-button" type="button" title="Maximizar">↗</button><button id="deleteItemBtn" class="ghost danger" type="button">Excluir</button></div>
+      </div>
       <div class="drawer-content">
         <input id="itemTitle" class="item-title-input" maxlength="140" placeholder="Sem título" aria-label="Título do item" />
         <div class="item-properties"><label>Pasta<select id="itemFolder"></select></label><label>Tags<input id="itemTags" placeholder="trabalho, importante, estudos" /></label></div>
