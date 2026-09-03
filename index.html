@@ -16,27 +16,7 @@
       <h1>Seu espaço pessoal.<br>Organizado do seu jeito.</h1>
       <p>Centralize notas, acessos, links, arquivos, prompts, checklists e informações importantes em um único workspace sincronizado.</p>
       <button id="googleSignIn" class="primary gate-button" type="button">Entrar com Google</button>
-      <small>Seus dados ficam vinculados à sua conta e o conteúdo do workspace pode ser protegido com senha mestra.</small>
-    </div>
-  </section>
-
-  <section id="lockView" class="gate-view hidden">
-    <div class="gate-shell lock-shell">
-      <div class="brand-mark gate-logo">WS</div>
-      <span id="lockEyebrow" class="eyebrow">Workspace protegido</span>
-      <h1 id="lockTitle">Desbloquear Work Storage</h1>
-      <p id="lockText">Digite sua senha mestra para descriptografar seus itens neste dispositivo.</p>
-      <form id="masterForm" class="master-form">
-        <label>Senha mestra
-          <input id="masterPassword" type="password" autocomplete="current-password" required />
-        </label>
-        <label id="masterConfirmWrap" class="hidden">Confirmar senha
-          <input id="masterConfirm" type="password" autocomplete="new-password" />
-        </label>
-        <p id="masterError" class="form-error" role="alert"></p>
-        <button id="masterSubmit" class="primary" type="submit">Desbloquear</button>
-      </form>
-      <small>Por segurança, a senha mestra não é armazenada no Firebase e não pode ser recuperada.</small>
+      <small>Seus dados ficam vinculados à sua conta Google e sincronizados pelo Firebase.</small>
     </div>
   </section>
 
@@ -109,7 +89,7 @@
       <div class="drawer-content">
         <input id="itemTitle" class="item-title-input" maxlength="140" placeholder="Sem título" aria-label="Título do item" />
         <div class="item-properties"><label>Pasta<select id="itemFolder"></select></label><label>Tags<input id="itemTags" placeholder="trabalho, importante, estudos" /></label></div>
-        <div class="item-status"><span id="itemUpdated">Atualizado agora</span><span>•</span><span>Criptografado</span></div>
+        <div class="item-status"><span id="itemUpdated">Atualizado agora</span><span>•</span><span>Sincronizado</span></div>
         <div id="blocks" class="blocks"></div>
         <div class="add-block-bar"><select id="blockType"><option value="text">Texto</option><option value="login">Login e senha</option><option value="link">Link</option><option value="file">Arquivo / imagem</option><option value="checklist">Checklist</option><option value="code">Código / prompt</option><option value="fields">Campos personalizados</option></select><button id="addBlockBtn" class="secondary" type="button">＋ Adicionar bloco</button></div>
       </div>
@@ -117,8 +97,7 @@
 
     <div id="accountMenu" class="account-menu hidden" role="menu">
       <div class="menu-account"><strong id="accountName">Work Storage</strong><span id="accountEmail"></span></div>
-      <button id="lockBtn" type="button">Bloquear workspace <span>⌁</span></button>
-      <button id="exportBtn" type="button">Exportar backup criptografado</button>
+      <button id="exportBtn" type="button">Exportar backup</button>
       <button id="importBtn" type="button">Restaurar backup</button>
       <button type="button" onclick="document.getElementById('themeBtn').click()">Alternar tema</button>
       <hr />
@@ -134,7 +113,6 @@
   <script src="./firebase-config.js"></script>
   <script src="./workspace.js"></script>
   <script src="./workspace-ui.js"></script>
-  <script src="./master-tools.js"></script>
   <script src="./auth-fix.js"></script>
 </body>
 </html>
