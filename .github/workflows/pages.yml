@@ -27,13 +27,15 @@ jobs:
         run: |
           node --check workspace.js
           node --check workspace-ui.js
+          node --check master-tools.js
+          node --check remove-master.js
           node --check auth-fix.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Prepare static site
         run: |
           mkdir _site
-          cp index.html styles.css workspace.js workspace-ui.js firebase-config.js auth-fix.js _site/
+          cp index.html styles.css workspace.js workspace-ui.js master-tools.js remove-master.js firebase-config.js auth-fix.js _site/
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3
         with:
