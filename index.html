@@ -46,33 +46,20 @@
         <div class="brand-mark small">WS</div>
         <div><strong>Work Storage</strong><span>workspace pessoal</span></div>
       </div>
-
       <button id="newItemBtn" class="primary new-item-button" type="button">＋ Novo item</button>
-
       <nav class="main-nav" aria-label="Navegação principal">
         <button class="nav-button active" data-filter="home"><span>⌂</span>Início</button>
         <button class="nav-button" data-filter="all"><span>◇</span>Todos os itens</button>
         <button class="nav-button" data-filter="pinned"><span>★</span>Fixados</button>
       </nav>
-
-      <div class="sidebar-section-head">
-        <span>Pastas</span>
-        <button id="newFolderBtn" class="mini-button" type="button" title="Nova pasta" aria-label="Nova pasta">＋</button>
-      </div>
+      <div class="sidebar-section-head"><span>Pastas</span><button id="newFolderBtn" class="mini-button" type="button" title="Nova pasta" aria-label="Nova pasta">＋</button></div>
       <div id="folderNav" class="folder-nav"></div>
-
-      <div class="sidebar-foot">
-        <span>Arraste as pastas para reorganizar</span>
-      </div>
+      <div class="sidebar-foot"><span>Arraste as pastas para reorganizar</span></div>
     </aside>
 
     <div class="workspace-main">
       <header class="topbar">
-        <label class="search-box">
-          <span aria-hidden="true">⌕</span>
-          <input id="searchInput" type="search" placeholder="Buscar em todo o workspace..." autocomplete="off" />
-          <kbd>Ctrl K</kbd>
-        </label>
+        <label class="search-box"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Buscar em todo o workspace..." autocomplete="off" /><kbd>Ctrl K</kbd></label>
         <div class="topbar-actions">
           <div id="syncState" class="sync-state"><i></i><span>Carregando...</span></div>
           <button id="themeBtn" class="icon-button" type="button" title="Alternar tema" aria-label="Alternar tema">◐</button>
@@ -82,15 +69,7 @@
 
       <main class="content-area">
         <section id="homeView">
-          <div class="hero-row">
-            <div>
-              <span class="eyebrow">Seu workspace</span>
-              <h1>O que você precisa agora?</h1>
-              <p>Crie, encontre e conecte suas informações sem separar tudo em aplicativos diferentes.</p>
-            </div>
-            <button id="quickNewBtn" class="primary" type="button">＋ Criar item</button>
-          </div>
-
+          <div class="hero-row"><div><span class="eyebrow">Seu workspace</span><h1>O que você precisa agora?</h1><p>Crie, encontre e conecte suas informações sem separar tudo em aplicativos diferentes.</p></div><button id="quickNewBtn" class="primary" type="button">＋ Criar item</button></div>
           <section class="home-section quick-actions">
             <div class="section-heading"><div><span>Atalhos rápidos</span><h2>Comece do jeito certo</h2></div></div>
             <div class="quick-grid">
@@ -102,34 +81,13 @@
               <button data-template="link"><span>↗</span><strong>Link</strong><small>Favorito com observações</small></button>
             </div>
           </section>
-
-          <section class="home-section">
-            <div class="section-heading"><div><span>Recentes</span><h2>Continue de onde parou</h2></div><button data-filter="all" class="text-link">Ver todos</button></div>
-            <div id="recentItems" class="item-grid cards compact"></div>
-          </section>
-
+          <section class="home-section"><div class="section-heading"><div><span>Recentes</span><h2>Continue de onde parou</h2></div><button data-filter="all" class="text-link">Ver todos</button></div><div id="recentItems" class="item-grid cards compact"></div></section>
           <section class="home-section split-home">
-            <div>
-              <div class="section-heading"><div><span>Fixados</span><h2>Importantes</h2></div></div>
-              <div id="pinnedItems" class="item-grid cards compact"></div>
-            </div>
-            <div>
-              <div class="section-heading"><div><span>Pastas</span><h2>Organização</h2></div><button data-new-folder class="text-link">Nova pasta</button></div>
-              <div id="homeFolders" class="folder-grid"></div>
-            </div>
+            <div><div class="section-heading"><div><span>Fixados</span><h2>Importantes</h2></div></div><div id="pinnedItems" class="item-grid cards compact"></div></div>
+            <div><div class="section-heading"><div><span>Pastas</span><h2>Organização</h2></div><button data-new-folder class="text-link">Nova pasta</button></div><div id="homeFolders" class="folder-grid"></div></div>
           </section>
         </section>
-
-        <section id="libraryView" class="hidden">
-          <div class="library-head">
-            <div><span id="libraryCount" class="eyebrow">0 itens</span><h1 id="libraryTitle">Todos os itens</h1></div>
-            <div class="view-toggle" aria-label="Modo de visualização">
-              <button data-view="cards" type="button" title="Cards">▦</button>
-              <button data-view="list" type="button" title="Lista">☷</button>
-            </div>
-          </div>
-          <div id="itemGrid" class="item-grid cards"></div>
-        </section>
+        <section id="libraryView" class="hidden"><div class="library-head"><div><span id="libraryCount" class="eyebrow">0 itens</span><h1 id="libraryTitle">Todos os itens</h1></div><div class="view-toggle" aria-label="Modo de visualização"><button data-view="cards" type="button" title="Cards">▦</button><button data-view="list" type="button" title="Lista">☷</button></div></div><div id="itemGrid" class="item-grid cards"></div></section>
       </main>
     </div>
 
@@ -147,34 +105,13 @@
 
     <div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
     <aside id="itemDrawer" class="item-drawer hidden" aria-label="Editor do item">
-      <div class="drawer-topbar">
-        <button id="drawerClose" class="icon-button" type="button" aria-label="Fechar">←</button>
-        <div class="drawer-actions">
-          <button id="pinItemBtn" class="ghost" type="button">☆ Fixar</button>
-          <button id="maximizeBtn" class="icon-button" type="button" title="Maximizar">↗</button>
-          <button id="deleteItemBtn" class="ghost danger" type="button">Excluir</button>
-        </div>
-      </div>
+      <div class="drawer-topbar"><button id="drawerClose" class="icon-button" type="button" aria-label="Fechar">←</button><div class="drawer-actions"><button id="pinItemBtn" class="ghost" type="button">☆ Fixar</button><button id="maximizeBtn" class="icon-button" type="button" title="Maximizar">↗</button><button id="deleteItemBtn" class="ghost danger" type="button">Excluir</button></div></div>
       <div class="drawer-content">
         <input id="itemTitle" class="item-title-input" maxlength="140" placeholder="Sem título" aria-label="Título do item" />
-        <div class="item-properties">
-          <label>Pasta<select id="itemFolder"></select></label>
-          <label>Tags<input id="itemTags" placeholder="trabalho, importante, estudos" /></label>
-        </div>
+        <div class="item-properties"><label>Pasta<select id="itemFolder"></select></label><label>Tags<input id="itemTags" placeholder="trabalho, importante, estudos" /></label></div>
         <div class="item-status"><span id="itemUpdated">Atualizado agora</span><span>•</span><span>Criptografado</span></div>
         <div id="blocks" class="blocks"></div>
-        <div class="add-block-bar">
-          <select id="blockType">
-            <option value="text">Texto</option>
-            <option value="login">Login e senha</option>
-            <option value="link">Link</option>
-            <option value="file">Arquivo / imagem</option>
-            <option value="checklist">Checklist</option>
-            <option value="code">Código / prompt</option>
-            <option value="fields">Campos personalizados</option>
-          </select>
-          <button id="addBlockBtn" class="secondary" type="button">＋ Adicionar bloco</button>
-        </div>
+        <div class="add-block-bar"><select id="blockType"><option value="text">Texto</option><option value="login">Login e senha</option><option value="link">Link</option><option value="file">Arquivo / imagem</option><option value="checklist">Checklist</option><option value="code">Código / prompt</option><option value="fields">Campos personalizados</option></select><button id="addBlockBtn" class="secondary" type="button">＋ Adicionar bloco</button></div>
       </div>
     </aside>
 
@@ -187,17 +124,16 @@
       <hr />
       <button id="signOutBtn" type="button">Sair da conta</button>
     </div>
-
     <input id="importInput" type="file" accept="application/json" class="hidden" />
   </div>
 
   <div id="toastRegion" class="toast-region" aria-live="polite"></div>
-
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="./firebase-config.js"></script>
   <script src="./workspace.js"></script>
+  <script src="./workspace-ui.js"></script>
   <script src="./auth-fix.js"></script>
 </body>
 </html>
